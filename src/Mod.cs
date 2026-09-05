@@ -19,13 +19,15 @@ namespace qUAckzak.Mod
             base.OnPostInitialize();
 
             TurboQuackMode turboQuack = new();
+            KonuamiMode konuami = new();
 
             MonoMain.instance.Components.Add(
-                new ModeHost(MonoMain.instance, turboQuack));
+                new ModeHost(MonoMain.instance, turboQuack, konuami));
 
             QuackzakCommands.Register(turboQuack);
 
             DevConsole.Log("qUAckzak loaded mode: turboqUAck");
+            DevConsole.Log("qUAckzak loaded mode: konUAmi");
         }
     }
 }

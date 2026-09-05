@@ -54,3 +54,11 @@ For more info see [qUAckzak.Mod.csproj](./qUAckzak.Mod.csproj)
   turboqUAck is currently enabled or disabled.
 
 All qUAckzak console commands use the lowercase `quackzak_` prefix.
+
+### konUAmi
+
+- In **Options > Edit Controls**, bind **KONUAMI** for your keyboard or
+  controller.
+- Press the bound button to pop the duck you currently control, using Duck
+  Game's built-in Konami-code pop behavior.
+- Other local and remote ducks are not affected.
