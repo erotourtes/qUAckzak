@@ -50,7 +50,9 @@ namespace qUAckzak.Mod.QuackHat
                 {
                     try
                     {
-                        hats.Add(QuackHatManifestLoader.Load(packageDirectory));
+                        QuackHatDefinition hat = QuackHatManifestLoader.Load(packageDirectory);
+                        QuackHatAssetLoader.Load(hat);
+                        hats.Add(hat);
                     }
                     catch (Exception exception)
                     {
@@ -61,6 +63,11 @@ namespace qUAckzak.Mod.QuackHat
                         });
                     }
                 }
+            }
+
+            foreach (QuackHatDefinition oldHat in _hats)
+            {
+                QuackHatAssetLoader.Unload(oldHat);
             }
 
             _hats = hats;

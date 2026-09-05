@@ -115,7 +115,8 @@ Animations are nested directly inside their component:
 ```
 
 `firstFrame` and `lastFrame` are an inclusive contiguous range.
-`ticksPerFrame` must be positive. Supported triggers are:
+Frames are numbered left-to-right and then top-to-bottom, matching Duck Game's
+`SpriteMap`. `ticksPerFrame` must be positive. Supported triggers are:
 
 ```text
 default  idle  running  airborne  crouching  sliding  ragdoll  netted
@@ -476,8 +477,11 @@ rejects a package when:
 - a static component redundantly declares a frame size; or
 - a world one-shot has no event that could display it.
 
-Image dimensions and frame bounds will be validated when sprite loading is
-implemented.
+During discovery, every component PNG is decoded through Duck Game's native
+content loader. The package is rejected if a PNG cannot be decoded, a frame is
+larger than its sheet, the sheet is not evenly divisible into frames, or an
+animation references a frame outside the sheet. Static components use their
+entire image as their single frame.
 
 ## Online model
 
@@ -497,8 +501,9 @@ protocol.
 
 ## Implementation order
 
-1. Parse, discover, and validate every `content/quackhat/*/hat.xml` package.
-2. Load sprite sheets and validate image dimensions and frame bounds.
+1. **Done:** parse, discover, and validate every
+   `content/quackhat/*/hat.xml` package.
+2. **Done:** load sprite sheets and validate image dimensions and frame bounds.
 3. Register root hats and render static attached components offline.
 4. Implement animation clocks and duck-state triggers.
 5. Implement per-level group and duplicate-trigger choices.

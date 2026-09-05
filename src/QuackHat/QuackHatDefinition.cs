@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace qUAckzak.Mod.QuackHat
 {
@@ -67,8 +68,12 @@ namespace qUAckzak.Mod.QuackHat
     {
         public string Id { get; set; }
         public string SpritePath { get; set; }
+        public Texture2D SpriteTexture { get; set; }
+        public int SheetWidth { get; set; }
+        public int SheetHeight { get; set; }
         public int FrameWidth { get; set; }
         public int FrameHeight { get; set; }
+        public int FrameCount { get; set; }
         public QuackHatParentKind ParentKind { get; set; }
         public string ParentComponentId { get; set; }
         public float OffsetX { get; set; }

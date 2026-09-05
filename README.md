@@ -74,3 +74,5 @@ their XSD-validated `hat.xml` manifests.
 - Run `quackzak_quackhat_status` to list loaded packages and manifest errors.
 - Run `quackzak_quackhat_reload` after editing a manifest to reload and
   validate every package without restarting Duck Game.
+- Package discovery also decodes every component PNG and checks its frame grid
+  and animation ranges before accepting the hat.
