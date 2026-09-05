@@ -13,4 +13,6 @@ build/
 *.csproj.user
 *.dll
 
+/dotnet/
+
 docs/ignored/

@@ -33,3 +33,24 @@ DGR-only and is loaded directly because `NoRecompilation` is enabled in
 `mod.conf`.
 
 For more info see [qUAckzak.Mod.csproj](./qUAckzak.Mod.csproj)
+
+## Modes
+
+### turboqUAck
+
+- In **Options > Edit Controls**, bind **TURBO QUACK** for your keyboard or
+  controller. Press that button to enable turboqUAck for the duck you currently
+  control, and press it again to disable the mode. The current state is shown
+  on screen. The toggle works in both offline and online play.
+- Hold Left, Right, or Up while ragdolled to repeat that nudge at the fastest
+  rate allowed by the game's normal ragdoll nudge cooldown. Release the
+  direction to stop. Fancy Shoes are intentionally excluded.
+- Hold Jump while trapped in a net or a Camping Gun sleeping bag to repeat the
+  struggle until released or the duck escapes. Left and Right can still be held
+  to steer a grounded net.
+- Other local and remote ducks are not affected. The enabled state persists
+  between rounds.
+- Run `quackzak_turboquack_status` in the developer console to report whether
+  turboqUAck is currently enabled or disabled.
+
+All qUAckzak console commands use the lowercase `quackzak_` prefix.
