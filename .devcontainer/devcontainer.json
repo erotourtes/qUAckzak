@@ -5,7 +5,8 @@
     },
     "mounts": [
         "source=${localWorkspaceFolder}/.local/duckgame-rebuilt/DuckGame.exe,target=/opt/duckgame/rebuilt/DuckGame.exe,type=bind,readonly",
-        "source=${localWorkspaceFolder}/.local/duckgame-rebuilt/FNA.dll,target=/opt/duckgame/rebuilt/FNA.dll,type=bind,readonly"
+        "source=${localWorkspaceFolder}/.local/duckgame-rebuilt/FNA.dll,target=/opt/duckgame/rebuilt/FNA.dll,type=bind,readonly",
+        "source=${localWorkspaceFolder}/.local/duckgame-rebuilt/0Harmony.dll,target=/opt/duckgame/rebuilt/0Harmony.dll,type=bind,readonly"
     ],
     "customizations": {
         "vscode": {

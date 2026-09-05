@@ -49,6 +49,10 @@
       <HintPath>$(DuckGameDir)/FNA.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(DuckGameDir)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -62,6 +66,8 @@
            Text="Duck Game Rebuilt's DuckGame.exe was not found in '$(DuckGameDir)'. Create the ignored .local/duckgame-rebuilt symlink." />
     <Error Condition="!Exists('$(DuckGameDir)/FNA.dll')"
            Text="Duck Game Rebuilt's FNA.dll was not found in '$(DuckGameDir)'. Create the ignored .local/duckgame-rebuilt symlink." />
+    <Error Condition="!Exists('$(DuckGameDir)/0Harmony.dll')"
+           Text="Duck Game Rebuilt's 0Harmony.dll was not found in '$(DuckGameDir)'. Create the ignored .local/duckgame-rebuilt symlink." />
   </Target>
 
   <Target Name="CleanAll">
