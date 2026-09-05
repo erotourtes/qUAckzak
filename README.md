@@ -32,6 +32,9 @@ Both tasks compile against Duck Game Rebuilt and FNA. The resulting DLL is
 DGR-only and is loaded directly because `NoRecompilation` is enabled in
 `mod.conf`.
 
+qUAckzak is a client mod. DGR does not advertise it as a required lobby mod, so
+you can keep it enabled when playing with people who do not have it installed.
+
 For more info see [qUAckzak.Mod.csproj](./qUAckzak.Mod.csproj)
 
 ## Modes

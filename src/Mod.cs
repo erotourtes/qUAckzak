@@ -5,7 +5,7 @@ using qUAckzak.Mod.Modes;
 
 namespace qUAckzak.Mod
 {
-    public sealed class QuackzakMod : DuckGame.Mod
+    public sealed class QuackzakMod : DuckGame.ClientMod
     {
         protected override void OnPreInitialize()
         {
