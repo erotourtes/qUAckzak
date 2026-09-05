@@ -58,6 +58,8 @@
   <ItemGroup>
     <Compile Include="src/**/*.cs" />
     <Content Include="content/**/*" />
+    <EmbeddedResource Include="schemas/quackhat.xsd"
+                      LogicalName="qUAckzak.QuackHat.Schema.xsd" />
     <None Include="mod.conf" />
   </ItemGroup>
 

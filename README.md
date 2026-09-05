@@ -65,3 +65,12 @@ All qUAckzak console commands use the lowercase `quackzak_` prefix.
 - Press the bound button to pop the duck you currently control, using Duck
   Game's built-in Konami-code pop behavior.
 - Other local and remote ducks are not affected.
+
+## qUAckhat
+
+qUAckhat packages live under `content/quackhat/<hat-id>/` and are configured by
+their XSD-validated `hat.xml` manifests.
+
+- Run `quackzak_quackhat_status` to list loaded packages and manifest errors.
+- Run `quackzak_quackhat_reload` after editing a manifest to reload and
+  validate every package without restarting Duck Game.
