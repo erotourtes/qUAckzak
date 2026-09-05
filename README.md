@@ -9,13 +9,11 @@
 
 ### vscode/Dev container (recommended)
 
-1. Link the vanilla game, Duck Game Rebuilt, and the XNA 4 reference directory.
+1. Link your Duck Game Rebuilt installation.
 
    ```sh
    mkdir -p .local
-   ln -s "/path/to/vanilla/Duck Game" .local/duckgame-vanilla
    ln -s /path/to/DuckGameRebuilt .local/duckgame-rebuilt
-   ln -s /path/to/XNA/GAC_32 .local/xna
    ```
 
 2. Install Docker, VS Code, and the **Dev Containers** extension.
@@ -30,9 +28,8 @@
 - **Build (prod)** creates an optimized `.dll` without debug symbols in
   `build/Release`.
 
-Both tasks compile against vanilla Duck Game and XNA. The resulting DLL is the
-portable artifact: vanilla loads it directly, while Duck Game Rebuilt performs
-its normal XNA-to-FNA remapping. Keep `NoRecompilation` out of `mod.conf`, as
-enabling it would make the DLL DGR-only.
+Both tasks compile against Duck Game Rebuilt and FNA. The resulting DLL is
+DGR-only and is loaded directly because `NoRecompilation` is enabled in
+`mod.conf`.
 
 For more info see [qUAckzak.Mod.csproj](./qUAckzak.Mod.csproj)

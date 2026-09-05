@@ -18,11 +18,8 @@
     <OutputPath>build/$(Configuration)/</OutputPath>
     <BaseIntermediateOutputPath>obj/</BaseIntermediateOutputPath>
     <IntermediateOutputPath>obj/$(Configuration)/</IntermediateOutputPath>
-    <DuckGameDir Condition="'$(DuckGameDir)' == '' and Exists('/opt/duckgame/vanilla/DuckGame.exe')">/opt/duckgame/vanilla</DuckGameDir>
-    <DuckGameDir Condition="'$(DuckGameDir)' == ''">$(MSBuildProjectDirectory)/.local/duckgame-vanilla</DuckGameDir>
-    <XnaDir Condition="'$(XnaDir)' == '' and Exists('/opt/xna/Microsoft.Xna.Framework')">/opt/xna</XnaDir>
-    <XnaDir Condition="'$(XnaDir)' == ''">$(MSBuildProjectDirectory)/.local/xna</XnaDir>
-    <XnaFrameworkVersion>v4.0_4.0.0.0__842cf8be1de50553</XnaFrameworkVersion>
+    <DuckGameDir Condition="'$(DuckGameDir)' == '' and Exists('/opt/duckgame/rebuilt/DuckGame.exe')">/opt/duckgame/rebuilt</DuckGameDir>
+    <DuckGameDir Condition="'$(DuckGameDir)' == ''">$(MSBuildProjectDirectory)/.local/duckgame-rebuilt</DuckGameDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -48,16 +45,8 @@
       <HintPath>$(DuckGameDir)/DuckGame.exe</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="Microsoft.Xna.Framework">
-      <HintPath>$(XnaDir)/Microsoft.Xna.Framework/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Microsoft.Xna.Framework.Game">
-      <HintPath>$(XnaDir)/Microsoft.Xna.Framework.Game/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.Game.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Microsoft.Xna.Framework.Graphics">
-      <HintPath>$(XnaDir)/Microsoft.Xna.Framework.Graphics/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.Graphics.dll</HintPath>
+    <Reference Include="FNA">
+      <HintPath>$(DuckGameDir)/FNA.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
@@ -70,11 +59,9 @@
 
   <Target Name="CheckDuckGameInstall" BeforeTargets="ResolveAssemblyReferences">
     <Error Condition="!Exists('$(DuckGameDir)/DuckGame.exe')"
-           Text="Vanilla DuckGame.exe was not found in '$(DuckGameDir)'. Create the ignored .local/duckgame-vanilla symlink." />
-    <Error Condition="!Exists('$(XnaDir)/Microsoft.Xna.Framework/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.dll') Or
-                      !Exists('$(XnaDir)/Microsoft.Xna.Framework.Game/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.Game.dll') Or
-                      !Exists('$(XnaDir)/Microsoft.Xna.Framework.Graphics/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.Graphics.dll')"
-           Text="The XNA Framework reference assemblies were not found in '$(XnaDir)'. Create the ignored .local/xna symlink." />
+           Text="Duck Game Rebuilt's DuckGame.exe was not found in '$(DuckGameDir)'. Create the ignored .local/duckgame-rebuilt symlink." />
+    <Error Condition="!Exists('$(DuckGameDir)/FNA.dll')"
+           Text="Duck Game Rebuilt's FNA.dll was not found in '$(DuckGameDir)'. Create the ignored .local/duckgame-rebuilt symlink." />
   </Target>
 
   <Target Name="CleanAll">
