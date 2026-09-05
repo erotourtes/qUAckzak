@@ -4,7 +4,7 @@
     <RootNamespace>qUAckzak.Mod</RootNamespace>
     <!-- The loader strips the .Mod suffix from the directory name. -->
     <AssemblyName>qUAckzak</AssemblyName>
-    <AssemblyTitle>qUAckzak Duck Game Mod</AssemblyTitle>
+    <AssemblyTitle>qUAckzak</AssemblyTitle>
     <Company>erotourtes</Company>
     <Description>Duck Game mod for feeling as a qUAckzak</Description>
     <Version>0.0.1</Version>
