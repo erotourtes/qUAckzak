@@ -1,0 +1,25 @@
+{
+    "name": "qUAckzak.Mod (Duck Game)",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "mounts": [
+        "source=${localWorkspaceFolder}/.local/duckgame-vanilla/DuckGame.exe,target=/opt/duckgame/vanilla/DuckGame.exe,type=bind,readonly",
+        "source=${localWorkspaceFolder}/.local/duckgame-rebuilt/DuckGame.exe,target=/opt/duckgame/rebuilt/DuckGame.exe,type=bind,readonly",
+        "source=${localWorkspaceFolder}/.local/duckgame-rebuilt/FNA.dll,target=/opt/duckgame/rebuilt/FNA.dll,type=bind,readonly",
+        "source=${localWorkspaceFolder}/.local/xna/Microsoft.Xna.Framework/v4.0_4.0.0.0__842cf8be1de50553/Microsoft.Xna.Framework.dll,target=/opt/xna/Microsoft.Xna.Framework/v4.0_4.0.0.0__842cf8be1de50553/Microsoft.Xna.Framework.dll,type=bind,readonly",
+        "source=${localWorkspaceFolder}/.local/xna/Microsoft.Xna.Framework.Game/v4.0_4.0.0.0__842cf8be1de50553/Microsoft.Xna.Framework.Game.dll,target=/opt/xna/Microsoft.Xna.Framework.Game/v4.0_4.0.0.0__842cf8be1de50553/Microsoft.Xna.Framework.Game.dll,type=bind,readonly",
+        "source=${localWorkspaceFolder}/.local/xna/Microsoft.Xna.Framework.Graphics/v4.0_4.0.0.0__842cf8be1de50553/Microsoft.Xna.Framework.Graphics.dll,target=/opt/xna/Microsoft.Xna.Framework.Graphics/v4.0_4.0.0.0__842cf8be1de50553/Microsoft.Xna.Framework.Graphics.dll,type=bind,readonly"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csharp"
+            ]
+        }
+    },
+    "postCreateCommand": [
+        "./scripts/postCreateCommand"
+    ],
+    "remoteUser": "vscode"
+}

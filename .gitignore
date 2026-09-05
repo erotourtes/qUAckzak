@@ -1,0 +1,16 @@
+*_build.log
+*_compiled.hash
+*_compiled.dll
+*RebuiltData.txt
+
+bin/
+obj/
+build/
+.vs/
+.local/
+*.mdb
+*.pdb
+*.csproj.user
+*.dll
+
+docs/ignored/

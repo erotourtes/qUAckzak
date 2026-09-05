@@ -1,0 +1,86 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>qUAckzak.Mod</RootNamespace>
+    <!-- The loader strips the .Mod suffix from the directory name. -->
+    <AssemblyName>qUAckzak</AssemblyName>
+    <AssemblyTitle>qUAckzak Duck Game Mod</AssemblyTitle>
+    <Company>erotourtes</Company>
+    <Description>Duck Game mod for feeling as a qUAckzak</Description>
+    <Version>0.0.1</Version>
+    <AssemblyVersion>0.0.1.0</AssemblyVersion>
+    <FileVersion>0.0.1.0</FileVersion>
+    <InformationalVersion>0.0.1</InformationalVersion>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>14.0</LangVersion>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>build/$(Configuration)/</OutputPath>
+    <BaseIntermediateOutputPath>obj/</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>obj/$(Configuration)/</IntermediateOutputPath>
+    <DuckGameDir Condition="'$(DuckGameDir)' == '' and Exists('/opt/duckgame/vanilla/DuckGame.exe')">/opt/duckgame/vanilla</DuckGameDir>
+    <DuckGameDir Condition="'$(DuckGameDir)' == ''">$(MSBuildProjectDirectory)/.local/duckgame-vanilla</DuckGameDir>
+    <XnaDir Condition="'$(XnaDir)' == '' and Exists('/opt/xna/Microsoft.Xna.Framework')">/opt/xna</XnaDir>
+    <XnaDir Condition="'$(XnaDir)' == ''">$(MSBuildProjectDirectory)/.local/xna</XnaDir>
+    <XnaFrameworkVersion>v4.0_4.0.0.0__842cf8be1de50553</XnaFrameworkVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies"
+                      Version="1.0.3"
+                      PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="DuckGame">
+      <HintPath>$(DuckGameDir)/DuckGame.exe</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.Xna.Framework">
+      <HintPath>$(XnaDir)/Microsoft.Xna.Framework/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.Xna.Framework.Game">
+      <HintPath>$(XnaDir)/Microsoft.Xna.Framework.Game/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.Game.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.Xna.Framework.Graphics">
+      <HintPath>$(XnaDir)/Microsoft.Xna.Framework.Graphics/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.Graphics.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="src/**/*.cs" />
+    <Content Include="content/**/*" />
+    <None Include="mod.conf" />
+  </ItemGroup>
+
+  <Target Name="CheckDuckGameInstall" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(DuckGameDir)/DuckGame.exe')"
+           Text="Vanilla DuckGame.exe was not found in '$(DuckGameDir)'. Create the ignored .local/duckgame-vanilla symlink." />
+    <Error Condition="!Exists('$(XnaDir)/Microsoft.Xna.Framework/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.dll') Or
+                      !Exists('$(XnaDir)/Microsoft.Xna.Framework.Game/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.Game.dll') Or
+                      !Exists('$(XnaDir)/Microsoft.Xna.Framework.Graphics/$(XnaFrameworkVersion)/Microsoft.Xna.Framework.Graphics.dll')"
+           Text="The XNA Framework reference assemblies were not found in '$(XnaDir)'. Create the ignored .local/xna symlink." />
+  </Target>
+
+  <Target Name="CleanAll">
+    <RemoveDir Directories="$(MSBuildProjectDirectory)/build;
+                            $(MSBuildProjectDirectory)/obj" />
+    <Message Text="Removed generated build and intermediate files."
+             Importance="high" />
+  </Target>
+</Project>

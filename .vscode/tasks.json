@@ -1,0 +1,67 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build (dev)",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "${workspaceFolder}/qUAckzak.Mod.csproj",
+                "--configuration",
+                "Debug",
+                "--verbosity",
+                "minimal",
+                "--nologo"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "clear": true,
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Build (prod)",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "${workspaceFolder}/qUAckzak.Mod.csproj",
+                "--configuration",
+                "Release",
+                "--verbosity",
+                "minimal",
+                "--nologo"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "clear": true,
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Clean",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "msbuild",
+                "${workspaceFolder}/qUAckzak.Mod.csproj",
+                "/target:CleanAll",
+                "/verbosity:minimal",
+                "/nologo"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "clear": true,
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        }
+    ]
+}

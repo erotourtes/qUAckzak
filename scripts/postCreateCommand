@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+
+vanilla_executable=/opt/duckgame/vanilla/DuckGame.exe
+rebuilt_executable=/opt/duckgame/rebuilt/DuckGame.exe
+xna_framework=/opt/xna/Microsoft.Xna.Framework/v4.0_4.0.0.0__842cf8be1de50553/Microsoft.Xna.Framework.dll
+
+if [ ! -f "$vanilla_executable" ]; then
+    printf '%s\n' \
+        "Vanilla Duck Game mount check failed: $vanilla_executable was not found." \
+        "Make sure .local/duckgame-vanilla points to the vanilla installation, then rebuild the container." \
+        >&2
+    exit 1
+fi
+
+if [ ! -f "$rebuilt_executable" ]; then
+    printf '%s\n' \
+        "Duck Game Rebuilt mount check failed: $rebuilt_executable was not found." \
+        "Make sure .local/duckgame-rebuilt points to the Rebuilt installation, then rebuild the container." \
+        >&2
+    exit 1
+fi
+
+if [ ! -f "$xna_framework" ]; then
+    printf '%s\n' \
+        "XNA mount check failed: $xna_framework was not found." \
+        "Make sure .local/xna points to the XNA GAC_32 directory, then rebuild the container." \
+        >&2
+    exit 1
+fi
+
+printf '%s\n' \
+    "Vanilla Duck Game mount found: $vanilla_executable" \
+    "Duck Game Rebuilt mount found: $rebuilt_executable" \
+    "XNA reference mount found: $xna_framework"
