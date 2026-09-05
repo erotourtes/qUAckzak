@@ -1,0 +1,3 @@
+[submodule "docs/DuckGameRebuilt"]
+	path = docs/DuckGameRebuilt
+	url = git@github.com:TheFlyingFoool/DuckGameRebuilt.git
