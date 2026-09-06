@@ -73,7 +73,9 @@ their XSD-validated `hat.xml` manifests.
 
 - Run `quackzak_quackhat_status` to list loaded packages and manifest errors.
 - Run `quackzak_quackhat_reload` after editing a manifest to reload and
-  validate every package without restarting Duck Game.
+  validate every package without restarting Duck Game. Reloading is disabled
+  during an online session because Duck Game's native custom-hat indices must
+  remain stable.
 - Package discovery also decodes every component PNG and checks its frame grid
   and animation ranges before accepting the hat.
 - Each package's `hat.png` is registered as an ordinary selectable Duck Game
@@ -82,5 +84,7 @@ their XSD-validated `hat.xml` manifests.
   animations. Per-level selection groups and duplicate animation variants are
   also supported. Flying and ground followers use their configured speed,
   movement-facing direction, and follower animation states. Attached events,
-  detached death/direction effects, and time/distance emitters work offline.
-  Online component rendering is the next implementation slice.
+  detached death/direction effects, and time/distance emitters work offline and
+  online. Online pieces are transferred as native custom-hat images and
+  synchronized as ordinary `TeamHat` objects, so a receiving player does not
+  need qUAckzak to render them.

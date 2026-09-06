@@ -491,16 +491,20 @@ entire image as their single frame.
 The owning player is authoritative for their qUAckhat. Other modded clients do
 not create a second copy of a remote player's components.
 
-For every visual frame, the planned runtime creates ordinary Duck Game `Team`
-images and transfers them with native `NMSpecialHat`. Visible pieces become
-networked `TeamHat` objects. Animation changes select a native team through
-`TeamHat.netTeamIndex`; position, rotation, and facing use normal object
-synchronization.
+For every visual frame, the runtime creates ordinary Duck Game `Team` images
+and transfers them with native `NMSpecialHat`. Duck Game custom hats are fixed
+at 32×32 pixels, so larger qUAckhat frames are centered on a padded canvas and
+split into multiple hidden 32×32 teams. Visible pieces become networked
+`TeamHat` objects. Animation changes select a native team through
+`TeamHat.netTeamIndex`; position, rotation, facing, visibility, and lifecycle
+use normal object synchronization.
 
-The receiving client should not need `hat.xml`, qUAckhat classes, or a custom
-network message. Very short event animations can lose frames between network
-updates, so glint and death effects must be tested before adding an event
-protocol.
+Only the owning client creates these objects. The receiving client does not
+need `hat.xml`, qUAckhat classes, or a custom network message. Native ghost
+state does not carry `Depth`, `scale`, or `alpha`, so remote pieces use native
+hat depth and animation art must contain any scaling or fading. Very short
+event animations can lose frames between network updates, so glint and death
+effects must be tested before adding an event protocol.
 
 ## Implementation order
 
@@ -529,7 +533,14 @@ protocol.
    and emit independent one-shots on random inclusive time or travelled-distance
    intervals while their configured state is active. Finished instances remove
    themselves and do not alter Duck Game's gameplay RNG.
-8. Test animated hair between two qUAckzak clients.
-9. Test with a receiving client without qUAckzak.
-10. Test pet selection, glint, and death effects online before extending the
+8. **Done:** convert each component frame into one or more hidden native 32×32
+   `Team` images, reserve stable custom-team indices, and reject packages that
+   exceed Duck Game's 2,000-team per-profile range. Reloading is disabled while
+   online so those indices cannot shift.
+9. **Done:** let only the owning client run qUAckhat behavior online, transfer
+   its frame teams with reliable native `NMSpecialHat` messages, and represent
+   persistent components and one-shots as ordinary ghosted `TeamHat` tiles.
+10. Test animated hair between two qUAckzak clients.
+11. Test with a receiving client without qUAckzak.
+12. Test pet selection, glint, and death effects online before extending the
     network design.

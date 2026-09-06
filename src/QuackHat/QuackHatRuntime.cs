@@ -9,10 +9,13 @@ namespace qUAckzak.Mod.QuackHat
     internal sealed class QuackHatRuntime : IModMode
     {
         private readonly QuackHatService _service;
+        private readonly QuackHatNetworkTransport _networkTransport = new();
         private readonly Dictionary<Duck, QuackHatDuckVisual> _visuals = new();
         private readonly Dictionary<QuackHatDefinition, QuackHatLevelChoices> _levelChoices =
             new();
         private readonly List<QuackHatOneShotVisual> _oneShots = new();
+        private Level _currentLevel;
+        private bool _networked;
 
         public QuackHatRuntime(QuackHatService service)
         {
@@ -25,10 +28,23 @@ namespace qUAckzak.Mod.QuackHat
         public void Update()
         {
             Level level = Level.current;
-            if (Network.isActive || level == null)
+            if (level == null)
             {
-                Reset();
+                ResetVisuals();
+                _currentLevel = null;
                 return;
+            }
+
+            bool networkChanged = _networked != Network.isActive;
+            if (!ReferenceEquals(_currentLevel, level) || networkChanged)
+            {
+                ResetVisuals();
+                _currentLevel = level;
+                _networked = Network.isActive;
+                if (networkChanged)
+                {
+                    _networkTransport.Reset();
+                }
             }
 
             UpdateOneShots();
@@ -43,6 +59,12 @@ namespace qUAckzak.Mod.QuackHat
 
             foreach (Duck duck in ducks)
             {
+                if (_networked && duck.profile?.localPlayer != true)
+                {
+                    RemoveVisual(duck);
+                    continue;
+                }
+
                 TeamHat teamHat = duck.GetEquipment(typeof(TeamHat)) as TeamHat;
                 QuackHatDefinition definition = _service.FindByTeam(teamHat?.team);
 
@@ -63,12 +85,15 @@ namespace qUAckzak.Mod.QuackHat
                 {
                     try
                     {
+                        _networkTransport.EnsureSent(definition, duck.profile);
                         visual = new QuackHatDuckVisual(
                             level,
                             duck,
                             definition,
                             GetLevelChoices(definition, level.seed),
-                            SpawnOneShot);
+                            (component, animation, transform) =>
+                                SpawnOneShot(duck, component, animation, transform),
+                            _networked);
                         _visuals.Add(duck, visual);
                     }
                     catch (Exception exception)
@@ -79,6 +104,7 @@ namespace qUAckzak.Mod.QuackHat
                     }
                 }
 
+                _networkTransport.EnsureSent(definition, duck.profile);
                 visual.Update();
             }
 
@@ -91,6 +117,13 @@ namespace qUAckzak.Mod.QuackHat
         }
 
         public void Reset()
+        {
+            ResetVisuals();
+            _networkTransport.Reset();
+            _currentLevel = null;
+        }
+
+        private void ResetVisuals()
         {
             foreach (QuackHatDuckVisual visual in _visuals.Values)
             {
@@ -145,6 +178,7 @@ namespace qUAckzak.Mod.QuackHat
         }
 
         private void SpawnOneShot(
+            Duck owner,
             QuackHatComponentDefinition component,
             QuackHatAnimationDefinition animation,
             QuackHatTransformSnapshot transform)
@@ -155,7 +189,9 @@ namespace qUAckzak.Mod.QuackHat
                     Level.current,
                     component,
                     animation,
-                    transform));
+                    transform,
+                    _networked,
+                    owner));
             }
             catch (Exception exception)
             {
@@ -198,7 +234,8 @@ namespace qUAckzak.Mod.QuackHat
             Action<
                 QuackHatComponentDefinition,
                 QuackHatAnimationDefinition,
-                QuackHatTransformSnapshot> spawnOneShot)
+                QuackHatTransformSnapshot> spawnOneShot,
+            bool networked)
         {
             _level = level;
             _duck = duck;
@@ -221,28 +258,22 @@ namespace qUAckzak.Mod.QuackHat
                         continue;
                     }
 
-                    SpriteMap sprite = new(
-                        Content.GetTex2D(component.SpriteTexture),
-                        component.FrameWidth,
-                        component.FrameHeight)
-                    {
-                        frame = 0
-                    };
-                    SpriteThing thing = new(duck.x, duck.y, sprite)
-                    {
-                        solid = false,
-                        enablePhysics = false,
-                        shouldhavevessel = false,
-                        shouldbeinupdateloop = false,
-                        shouldbegraphicculled = false
-                    };
-
-                    _level.AddThing(thing);
+                    Vec2 position = new(duck.x, duck.y);
+                    IQuackHatRenderedVisual rendered = networked
+                        ? new QuackHatNetworkRenderedVisual(
+                            level,
+                            duck,
+                            component,
+                            position)
+                        : new QuackHatOfflineRenderedVisual(
+                            level,
+                            component,
+                            position);
                     _components.Add(
                         component.Id,
                         new QuackHatVisualComponent(
-                            sprite,
-                            thing,
+                            rendered,
+                            position,
                             _choices.GetAnimations(component.Id)));
                 }
 
@@ -294,11 +325,7 @@ namespace qUAckzak.Mod.QuackHat
         {
             foreach (QuackHatVisualComponent component in _components.Values)
             {
-                SpriteThing thing = component.Thing;
-                if (!thing.removeFromLevel)
-                {
-                    _level.RemoveThing(thing);
-                }
+                component.Rendered.Remove();
             }
 
             _components.Clear();
@@ -378,17 +405,15 @@ namespace qUAckzak.Mod.QuackHat
             }
 
             QuackHatComponentDefinition component = _definitions[componentId];
-            Thing parent = _duck;
             QuackHatVisualComponent parentVisual = null;
             if (component.ParentKind == QuackHatParentKind.Component)
             {
                 UpdateComponent(component.ParentComponentId, state, events, updated);
                 parentVisual = _components[component.ParentComponentId];
-                parent = parentVisual.Thing;
             }
 
             QuackHatVisualComponent visual = _components[componentId];
-            Vec2 target = GetTarget(component, parent);
+            Vec2 target = GetTarget(component, parentVisual);
             UpdatePosition(component, visual, target);
 
             visual.IsFollower = component.Controller is
@@ -405,18 +430,23 @@ namespace qUAckzak.Mod.QuackHat
             componentState.IsFollower = visual.IsFollower;
             componentState.FollowerMoving = visual.FollowerMoving;
             visual.Animation.Update(componentState, events);
-            visual.Sprite.frame = visual.Animation.Frame;
-
-            SpriteThing thing = visual.Thing;
-            thing.angle = parent.angle;
-            thing.scale = parent.scale;
-            thing.alpha = parent.alpha;
-            thing.offDir = ResolveFacing(component.Facing, parent, visual);
-            thing.flipHorizontal = thing.offDir < 0;
-            thing.depth = ResolveDepth(component.RenderLayer, parent.depth);
-            thing.visible = visual.Animation.Visible
-                && parent.visible
+            visual.Angle = parentVisual?.Angle ?? _duck.angle;
+            visual.Scale = parentVisual?.Scale ?? _duck.scale;
+            visual.Alpha = parentVisual?.Alpha ?? _duck.alpha;
+            visual.OffDir = ResolveFacing(
+                component.Facing,
+                parentVisual?.OffDir ?? _duck.offDir,
+                visual);
+            visual.Depth = ResolveDepth(
+                component.RenderLayer,
+                parentVisual?.Depth ?? _duck.depth);
+            visual.Visible = visual.Animation.Visible
+                && (parentVisual?.Visible ?? _duck.visible)
                 && !_duck.removeFromLevel;
+            visual.Rendered.Apply(
+                visual.Animation.Frame,
+                visual.CreateSnapshot(),
+                visual.Visible);
         }
 
         private void SpawnWorldOneShots(QuackHatAnimationEvents events)
@@ -486,7 +516,6 @@ namespace qUAckzak.Mod.QuackHat
             QuackHatComponentDefinition component,
             out QuackHatTransformSnapshot transform)
         {
-            Thing parent = _duck;
             QuackHatVisualComponent parentVisual = null;
             if (component.ParentKind == QuackHatParentKind.Component)
             {
@@ -497,11 +526,10 @@ namespace qUAckzak.Mod.QuackHat
                     transform = default;
                     return false;
                 }
-
-                parent = parentVisual.Thing;
             }
 
-            if (!parent.visible || _duck.removeFromLevel)
+            bool parentVisible = parentVisual?.Visible ?? _duck.visible;
+            if (!parentVisible || _duck.removeFromLevel)
             {
                 transform = default;
                 return false;
@@ -512,15 +540,17 @@ namespace qUAckzak.Mod.QuackHat
                 QuackHatFacing.Fixed => 1,
                 QuackHatFacing.Movement when parentVisual?.MovementDirection != 0 =>
                     parentVisual.MovementDirection,
-                _ => parent.offDir
+                _ => parentVisual?.OffDir ?? _duck.offDir
             };
             transform = new QuackHatTransformSnapshot(
-                GetTarget(component, parent),
-                parent.angle,
-                parent.scale,
-                parent.alpha,
+                GetTarget(component, parentVisual),
+                parentVisual?.Angle ?? _duck.angle,
+                parentVisual?.Scale ?? _duck.scale,
+                parentVisual?.Alpha ?? _duck.alpha,
                 offDir,
-                ResolveDepth(component.RenderLayer, parent.depth));
+                ResolveDepth(
+                    component.RenderLayer,
+                    parentVisual?.Depth ?? _duck.depth));
             return true;
         }
 
@@ -551,12 +581,18 @@ namespace qUAckzak.Mod.QuackHat
             };
         }
 
-        private Vec2 GetTarget(QuackHatComponentDefinition component, Thing parent)
+        private Vec2 GetTarget(
+            QuackHatComponentDefinition component,
+            QuackHatVisualComponent parent)
         {
             Vec2 offset = new(component.OffsetX, component.OffsetY);
             return component.ParentKind == QuackHatParentKind.Duck
                 ? _duck.anchorPosition + _duck.OffsetLocal(offset)
-                : parent.Offset(offset);
+                : parent.Position + QuackHatTransform.OffsetLocal(
+                    offset,
+                    parent.Angle,
+                    parent.Scale,
+                    parent.OffDir);
         }
 
         private void UpdatePosition(
@@ -564,10 +600,10 @@ namespace qUAckzak.Mod.QuackHat
             QuackHatVisualComponent visual,
             Vec2 target)
         {
-            Vec2 previous = visual.Thing.position;
+            Vec2 previous = visual.Position;
             if (!visual.PositionInitialized)
             {
-                visual.Thing.position = component.Controller == QuackHatController.GroundFollower
+                visual.Position = component.Controller == QuackHatController.GroundFollower
                     && TryFindGround(target.x, target.y, out Vec2 ground)
                     ? ground
                     : target;
@@ -579,11 +615,11 @@ namespace qUAckzak.Mod.QuackHat
             switch (component.Controller)
             {
                 case QuackHatController.Attached:
-                    visual.Thing.position = target;
+                    visual.Position = target;
                     break;
 
                 case QuackHatController.FlyingFollower:
-                    visual.Thing.position = MoveTowards(
+                    visual.Position = MoveTowards(
                         previous,
                         target,
                         component.Speed);
@@ -593,12 +629,12 @@ namespace qUAckzak.Mod.QuackHat
                     float nextX = MoveTowards(previous.x, target.x, component.Speed);
                     if (TryFindGround(nextX, target.y, out Vec2 ground))
                     {
-                        visual.Thing.position = ground;
+                        visual.Position = ground;
                     }
                     break;
             }
 
-            Vec2 movement = visual.Thing.position - previous;
+            Vec2 movement = visual.Position - previous;
             visual.MovedThisTick = movement.length > MovementThreshold;
             if (Math.Abs(movement.x) > MovementThreshold)
             {
@@ -662,7 +698,7 @@ namespace qUAckzak.Mod.QuackHat
 
         private static sbyte ResolveFacing(
             QuackHatFacing facing,
-            Thing parent,
+            sbyte parentOffDir,
             QuackHatVisualComponent visual)
         {
             return facing switch
@@ -670,7 +706,7 @@ namespace qUAckzak.Mod.QuackHat
                 QuackHatFacing.Fixed => 1,
                 QuackHatFacing.Movement when visual.MovementDirection != 0 =>
                     visual.MovementDirection,
-                _ => parent.offDir
+                _ => parentOffDir
             };
         }
 
@@ -689,20 +725,32 @@ namespace qUAckzak.Mod.QuackHat
         private sealed class QuackHatVisualComponent
         {
             public QuackHatVisualComponent(
-                SpriteMap sprite,
-                SpriteThing thing,
+                IQuackHatRenderedVisual rendered,
+                Vec2 position,
                 IReadOnlyDictionary<QuackHatTrigger, QuackHatAnimationDefinition> animations)
             {
-                Sprite = sprite;
-                Thing = thing;
+                Rendered = rendered;
+                Position = position;
                 Animation = new QuackHatAnimationPlayer(animations);
             }
 
-            public SpriteMap Sprite { get; }
-
-            public SpriteThing Thing { get; }
+            public IQuackHatRenderedVisual Rendered { get; }
 
             public QuackHatAnimationPlayer Animation { get; }
+
+            public Vec2 Position { get; set; }
+
+            public float Angle { get; set; }
+
+            public Vec2 Scale { get; set; }
+
+            public float Alpha { get; set; }
+
+            public sbyte OffDir { get; set; }
+
+            public Depth Depth { get; set; }
+
+            public bool Visible { get; set; }
 
             public bool PositionInitialized { get; set; }
 
@@ -713,6 +761,17 @@ namespace qUAckzak.Mod.QuackHat
             public bool IsFollower { get; set; }
 
             public bool FollowerMoving { get; set; }
+
+            public QuackHatTransformSnapshot CreateSnapshot()
+            {
+                return new QuackHatTransformSnapshot(
+                    Position,
+                    Angle,
+                    Scale,
+                    Alpha,
+                    OffDir,
+                    Depth);
+            }
         }
 
         private sealed class QuackHatEmitterComponent

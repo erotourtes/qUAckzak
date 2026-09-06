@@ -35,10 +35,9 @@ namespace qUAckzak.Mod.QuackHat
 
     internal sealed class QuackHatOneShotVisual
     {
-        private readonly Level _level;
-        private readonly SpriteMap _sprite;
-        private readonly SpriteThing _thing;
+        private readonly IQuackHatRenderedVisual _visual;
         private readonly QuackHatAnimationDefinition _animation;
+        private readonly QuackHatTransformSnapshot _transform;
 
         private int _frame;
         private int _ticksRemaining;
@@ -47,48 +46,30 @@ namespace qUAckzak.Mod.QuackHat
             Level level,
             QuackHatComponentDefinition component,
             QuackHatAnimationDefinition animation,
-            QuackHatTransformSnapshot transform)
+            QuackHatTransformSnapshot transform,
+            bool networked,
+            Duck owner)
         {
-            _level = level;
             _animation = animation;
+            _transform = transform;
             _frame = animation.FirstFrame;
             _ticksRemaining = animation.TicksPerFrame;
-
-            _sprite = new SpriteMap(
-                Content.GetTex2D(component.SpriteTexture),
-                component.FrameWidth,
-                component.FrameHeight)
-            {
-                frame = _frame
-            };
-            _thing = new SpriteThing(
-                transform.Position.x,
-                transform.Position.y,
-                _sprite)
-            {
-                angle = transform.Angle,
-                scale = transform.Scale,
-                alpha = transform.Alpha,
-                offDir = transform.OffDir,
-                flipHorizontal = transform.OffDir < 0,
-                depth = transform.Depth,
-                solid = false,
-                enablePhysics = false,
-                shouldhavevessel = false,
-                shouldbeinupdateloop = false,
-                shouldbegraphicculled = false
-            };
-
-            _level.AddThing(_thing);
+            _visual = networked
+                ? new QuackHatNetworkRenderedVisual(
+                    level,
+                    owner,
+                    component,
+                    transform.Position)
+                : new QuackHatOfflineRenderedVisual(
+                    level,
+                    component,
+                    transform.Position);
+            _visual.Apply(_frame, _transform, visible: true);
         }
 
         public bool Update()
         {
-            if (_thing.removeFromLevel)
-            {
-                return false;
-            }
-
+            _visual.Apply(_frame, _transform, visible: true);
             _ticksRemaining--;
             if (_ticksRemaining > 0)
             {
@@ -103,16 +84,13 @@ namespace qUAckzak.Mod.QuackHat
 
             _frame++;
             _ticksRemaining = _animation.TicksPerFrame;
-            _sprite.frame = _frame;
+            _visual.Apply(_frame, _transform, visible: true);
             return true;
         }
 
         public void Remove()
         {
-            if (!_thing.removeFromLevel)
-            {
-                _level.RemoveThing(_thing);
-            }
+            _visual.Remove();
         }
     }
 }
