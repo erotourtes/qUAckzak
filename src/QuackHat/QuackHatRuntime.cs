@@ -10,6 +10,8 @@ namespace qUAckzak.Mod.QuackHat
     {
         private readonly QuackHatService _service;
         private readonly Dictionary<Duck, QuackHatDuckVisual> _visuals = new();
+        private readonly Dictionary<QuackHatDefinition, QuackHatLevelChoices> _levelChoices =
+            new();
 
         public QuackHatRuntime(QuackHatService service)
         {
@@ -26,6 +28,11 @@ namespace qUAckzak.Mod.QuackHat
             {
                 Reset();
                 return;
+            }
+
+            foreach (QuackHatDefinition definition in _service.Hats)
+            {
+                GetLevelChoices(definition, level.seed);
             }
 
             Duck[] ducks = level.things[typeof(Duck)].Cast<Duck>().ToArray();
@@ -53,7 +60,11 @@ namespace qUAckzak.Mod.QuackHat
                 {
                     try
                     {
-                        visual = new QuackHatDuckVisual(level, duck, definition);
+                        visual = new QuackHatDuckVisual(
+                            level,
+                            duck,
+                            definition,
+                            GetLevelChoices(definition, level.seed));
                         _visuals.Add(duck, visual);
                     }
                     catch (Exception exception)
@@ -83,6 +94,7 @@ namespace qUAckzak.Mod.QuackHat
             }
 
             _visuals.Clear();
+            _levelChoices.Clear();
         }
 
         private void RemoveVisual(Duck duck)
@@ -95,6 +107,21 @@ namespace qUAckzak.Mod.QuackHat
             visual.Remove();
             _visuals.Remove(duck);
         }
+
+        private QuackHatLevelChoices GetLevelChoices(
+            QuackHatDefinition definition,
+            int levelSeed)
+        {
+            if (!_levelChoices.TryGetValue(
+                definition,
+                out QuackHatLevelChoices choices))
+            {
+                choices = new QuackHatLevelChoices(definition, levelSeed);
+                _levelChoices.Add(definition, choices);
+            }
+
+            return choices;
+        }
     }
 
     internal sealed class QuackHatDuckVisual
@@ -106,6 +133,7 @@ namespace qUAckzak.Mod.QuackHat
         private readonly Level _level;
         private readonly Duck _duck;
         private readonly IReadOnlyDictionary<string, QuackHatComponentDefinition> _definitions;
+        private readonly QuackHatLevelChoices _choices;
         private readonly Dictionary<string, QuackHatVisualComponent> _components =
             new(StringComparer.Ordinal);
 
@@ -115,10 +143,12 @@ namespace qUAckzak.Mod.QuackHat
         public QuackHatDuckVisual(
             Level level,
             Duck duck,
-            QuackHatDefinition definition)
+            QuackHatDefinition definition,
+            QuackHatLevelChoices choices)
         {
             _level = level;
             _duck = duck;
+            _choices = choices;
             Definition = definition;
             _definitions = definition.Components.ToDictionary(
                 component => component.Id,
@@ -155,7 +185,10 @@ namespace qUAckzak.Mod.QuackHat
                     _level.AddThing(thing);
                     _components.Add(
                         component.Id,
-                        new QuackHatVisualComponent(component, sprite, thing));
+                        new QuackHatVisualComponent(
+                            sprite,
+                            thing,
+                            _choices.GetAnimations(component.Id)));
                 }
             }
             catch
@@ -222,7 +255,7 @@ namespace qUAckzak.Mod.QuackHat
 
             eligible = component.Controller == QuackHatController.Attached
                 && component.Emitter == null
-                && component.Group == null;
+                && _choices.IsComponentSelected(component.Id);
 
             if (eligible && component.ParentKind == QuackHatParentKind.Component)
             {
@@ -296,13 +329,13 @@ namespace qUAckzak.Mod.QuackHat
         private sealed class QuackHatVisualComponent
         {
             public QuackHatVisualComponent(
-                QuackHatComponentDefinition definition,
                 SpriteMap sprite,
-                SpriteThing thing)
+                SpriteThing thing,
+                IReadOnlyDictionary<QuackHatTrigger, QuackHatAnimationDefinition> animations)
             {
                 Sprite = sprite;
                 Thing = thing;
-                Animation = new QuackHatAnimationPlayer(definition.Animations);
+                Animation = new QuackHatAnimationPlayer(animations);
             }
 
             public SpriteMap Sprite { get; }

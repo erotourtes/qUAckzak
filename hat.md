@@ -512,7 +512,10 @@ protocol.
    duck-state animations in the documented priority order, and play attached
    `death` and `direction_changed` events once. Event-only attached components
    remain hidden between events.
-5. Implement per-level group and duplicate-trigger choices.
+5. **Done:** choose one component from each selection group and one animation
+   variant for each duplicate trigger at level start. Choices are deterministic
+   from the level seed and hat ID, shared by every duck wearing that hat in the
+   level, and inherited by child components.
 6. Implement flying and ground follower controllers.
 7. Implement attached events, world one-shots, and emitters.
 8. Test animated hair between two qUAckzak clients.

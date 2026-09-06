@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 
 namespace qUAckzak.Mod.QuackHat
 {
@@ -31,13 +30,9 @@ namespace qUAckzak.Mod.QuackHat
         private int _ticksRemaining;
 
         public QuackHatAnimationPlayer(
-            IReadOnlyList<QuackHatAnimationDefinition> animations)
+            IReadOnlyDictionary<QuackHatTrigger, QuackHatAnimationDefinition> animations)
         {
-            // Slice 5 replaces this first-variant choice with one random choice
-            // per trigger and level. Keeping the lookup here isolates that change.
-            _animations = animations
-                .GroupBy(animation => animation.Trigger)
-                .ToDictionary(group => group.Key, group => group.First());
+            _animations = animations;
         }
 
         public int Frame { get; private set; }
