@@ -101,11 +101,16 @@ namespace qUAckzak.Mod.QuackHat
     {
         private const int EquippedHatDepth = 6;
         private const int ForegroundDepth = Duck.WingDepth + 1;
+        private const float RunningSpeedThreshold = 0.1f;
 
         private readonly Level _level;
         private readonly Duck _duck;
         private readonly IReadOnlyDictionary<string, QuackHatComponentDefinition> _definitions;
-        private readonly Dictionary<string, SpriteThing> _things = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, QuackHatVisualComponent> _components =
+            new(StringComparer.Ordinal);
+
+        private sbyte _previousOffDir;
+        private bool _wasDead;
 
         public QuackHatDuckVisual(
             Level level,
@@ -118,13 +123,15 @@ namespace qUAckzak.Mod.QuackHat
             _definitions = definition.Components.ToDictionary(
                 component => component.Id,
                 StringComparer.Ordinal);
+            _previousOffDir = duck.offDir;
+            _wasDead = duck.dead;
 
             try
             {
                 Dictionary<string, bool> eligibility = new(StringComparer.Ordinal);
                 foreach (QuackHatComponentDefinition component in definition.Components)
                 {
-                    if (!IsStaticAttached(component, eligibility))
+                    if (!IsRenderableAttached(component, eligibility))
                     {
                         continue;
                     }
@@ -146,7 +153,9 @@ namespace qUAckzak.Mod.QuackHat
                     };
 
                     _level.AddThing(thing);
-                    _things.Add(component.Id, thing);
+                    _components.Add(
+                        component.Id,
+                        new QuackHatVisualComponent(component, sprite, thing));
                 }
             }
             catch
@@ -160,27 +169,49 @@ namespace qUAckzak.Mod.QuackHat
 
         public void Update()
         {
-            HashSet<string> updated = new(StringComparer.Ordinal);
-            foreach (string componentId in _things.Keys)
+            QuackHatDuckAnimationState state = new()
             {
-                UpdateComponent(componentId, updated);
+                Netted = _duck.inNet,
+                Ragdoll = _duck.ragdoll != null,
+                Sliding = _duck.sliding,
+                Airborne = !_duck.grounded,
+                Running = _duck.grounded
+                    && Math.Abs(_duck.hSpeed) > RunningSpeedThreshold,
+                Crouching = _duck.crouch
+            };
+            QuackHatAnimationEvents events = new()
+            {
+                Death = !_wasDead && _duck.dead,
+                DirectionChanged = _previousOffDir != 0
+                    && _duck.offDir != 0
+                    && _previousOffDir != _duck.offDir
+            };
+
+            HashSet<string> updated = new(StringComparer.Ordinal);
+            foreach (string componentId in _components.Keys)
+            {
+                UpdateComponent(componentId, state, events, updated);
             }
+
+            _previousOffDir = _duck.offDir;
+            _wasDead = _duck.dead;
         }
 
         public void Remove()
         {
-            foreach (SpriteThing thing in _things.Values)
+            foreach (QuackHatVisualComponent component in _components.Values)
             {
+                SpriteThing thing = component.Thing;
                 if (!thing.removeFromLevel)
                 {
                     _level.RemoveThing(thing);
                 }
             }
 
-            _things.Clear();
+            _components.Clear();
         }
 
-        private bool IsStaticAttached(
+        private bool IsRenderableAttached(
             QuackHatComponentDefinition component,
             IDictionary<string, bool> eligibility)
         {
@@ -190,13 +221,12 @@ namespace qUAckzak.Mod.QuackHat
             }
 
             eligible = component.Controller == QuackHatController.Attached
-                && component.Animations.Count == 0
                 && component.Emitter == null
                 && component.Group == null;
 
             if (eligible && component.ParentKind == QuackHatParentKind.Component)
             {
-                eligible = IsStaticAttached(
+                eligible = IsRenderableAttached(
                     _definitions[component.ParentComponentId],
                     eligibility);
             }
@@ -205,7 +235,11 @@ namespace qUAckzak.Mod.QuackHat
             return eligible;
         }
 
-        private void UpdateComponent(string componentId, ISet<string> updated)
+        private void UpdateComponent(
+            string componentId,
+            QuackHatDuckAnimationState state,
+            QuackHatAnimationEvents events,
+            ISet<string> updated)
         {
             if (!updated.Add(componentId))
             {
@@ -216,11 +250,15 @@ namespace qUAckzak.Mod.QuackHat
             Thing parent = _duck;
             if (component.ParentKind == QuackHatParentKind.Component)
             {
-                UpdateComponent(component.ParentComponentId, updated);
-                parent = _things[component.ParentComponentId];
+                UpdateComponent(component.ParentComponentId, state, events, updated);
+                parent = _components[component.ParentComponentId].Thing;
             }
 
-            SpriteThing thing = _things[componentId];
+            QuackHatVisualComponent visual = _components[componentId];
+            visual.Animation.Update(state, events);
+            visual.Sprite.frame = visual.Animation.Frame;
+
+            SpriteThing thing = visual.Thing;
             Vec2 offset = new(component.OffsetX, component.OffsetY);
             thing.position = component.ParentKind == QuackHatParentKind.Duck
                 ? _duck.anchorPosition + _duck.OffsetLocal(offset)
@@ -231,7 +269,9 @@ namespace qUAckzak.Mod.QuackHat
             thing.offDir = ResolveFacing(component.Facing, parent);
             thing.flipHorizontal = thing.offDir < 0;
             thing.depth = ResolveDepth(component.RenderLayer, parent.depth);
-            thing.visible = parent.visible && !_duck.removeFromLevel;
+            thing.visible = visual.Animation.Visible
+                && parent.visible
+                && !_duck.removeFromLevel;
         }
 
         private static sbyte ResolveFacing(QuackHatFacing facing, Thing parent)
@@ -251,6 +291,25 @@ namespace qUAckzak.Mod.QuackHat
                 QuackHatRenderLayer.Foreground => _duck.depth + ForegroundDepth,
                 _ => parentDepth
             };
+        }
+
+        private sealed class QuackHatVisualComponent
+        {
+            public QuackHatVisualComponent(
+                QuackHatComponentDefinition definition,
+                SpriteMap sprite,
+                SpriteThing thing)
+            {
+                Sprite = sprite;
+                Thing = thing;
+                Animation = new QuackHatAnimationPlayer(definition.Animations);
+            }
+
+            public SpriteMap Sprite { get; }
+
+            public SpriteThing Thing { get; }
+
+            public QuackHatAnimationPlayer Animation { get; }
         }
     }
 }

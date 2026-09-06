@@ -508,7 +508,10 @@ protocol.
    render ungrouped, static `attached` component trees offline. Static children
    inherit their component parent's transform; animation, group selection,
    followers, emitters, and online component rendering remain in later slices.
-4. Implement animation clocks and duck-state triggers.
+4. **Done:** run independent per-component animation clocks, resolve looping
+   duck-state animations in the documented priority order, and play attached
+   `death` and `direction_changed` events once. Event-only attached components
+   remain hidden between events.
 5. Implement per-level group and duplicate-trigger choices.
 6. Implement flying and ground follower controllers.
 7. Implement attached events, world one-shots, and emitters.
