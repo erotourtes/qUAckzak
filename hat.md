@@ -554,8 +554,13 @@ effects must be tested before adding an event protocol.
     hat, independently animated moustache, and hair with separate default and
     airborne animations. Their 48×24 and 32×48 frames also exercise online
     horizontal and vertical tiling.
-13. Test animated hair between two qUAckzak clients.
-14. Test with a receiving client without qUAckzak.
-15. Add the remaining pet, decoration, and effect art described above.
-16. Test pet selection, glint, and death effects online before extending the
+13. **Done:** add the five-way `pets` selection group, including flying and
+    ground followers, follower movement/idle animation, movement facing, and
+    separately animated wings parented to the windmill. Ground followers align
+    their sprite bottom with the platform instead of sinking their center into
+    it.
+14. Test animated hair between two qUAckzak clients.
+15. Test with a receiving client without qUAckzak.
+16. Add the remaining decoration and effect art described above.
+17. Test pet selection, glint, and death effects online before extending the
     network design.

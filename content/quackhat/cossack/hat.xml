@@ -30,4 +30,82 @@
                lastFrame="7"
                ticksPerFrame="3" />
   </component>
+
+  <component id="windmill"
+             sprite="components/pets/windmill.png"
+             offsetX="-28"
+             offsetY="-12"
+             facing="movement"
+             controller="flying_follower"
+             speed="2"
+             group="pets" />
+  <component id="windmill-wings"
+             sprite="components/pets/windmill-wings.png"
+             frameWidth="48"
+             frameHeight="48"
+             parent="windmill"
+             layer="inherit">
+    <animation trigger="default"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="3" />
+  </component>
+
+  <component id="sharovary"
+             sprite="components/pets/sharovary.png"
+             frameWidth="48"
+             frameHeight="48"
+             offsetX="-28"
+             offsetY="8"
+             facing="movement"
+             controller="ground_follower"
+             speed="2"
+             group="pets">
+    <animation trigger="follower_moving"
+               firstFrame="0"
+               lastFrame="1"
+               ticksPerFrame="4" />
+    <animation trigger="follower_idle"
+               firstFrame="2"
+               lastFrame="3"
+               ticksPerFrame="5" />
+  </component>
+
+  <component id="cannon"
+             sprite="components/pets/cannon.png"
+             offsetX="-30"
+             offsetY="8"
+             facing="movement"
+             controller="ground_follower"
+             speed="1.5"
+             group="pets" />
+
+  <component id="chaika"
+             sprite="components/pets/chaika.png"
+             offsetX="-32"
+             offsetY="6"
+             facing="movement"
+             controller="flying_follower"
+             speed="1.5"
+             group="pets" />
+
+  <component id="barrel"
+             sprite="components/pets/barrel.png"
+             frameWidth="48"
+             frameHeight="48"
+             offsetX="-28"
+             offsetY="8"
+             facing="fixed"
+             controller="ground_follower"
+             speed="2"
+             group="pets">
+    <animation trigger="follower_moving"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="3" />
+    <animation trigger="follower_idle"
+               firstFrame="0"
+               lastFrame="0"
+               ticksPerFrame="1" />
+  </component>
 </hat>

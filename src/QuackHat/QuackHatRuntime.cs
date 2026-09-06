@@ -627,7 +627,7 @@ namespace qUAckzak.Mod.QuackHat
             {
                 visual.Position = component.Controller == QuackHatController.GroundFollower
                     && TryFindGround(target.x, target.y, out Vec2 ground)
-                    ? ground
+                    ? PlaceOnGround(component, ground)
                     : target;
                 visual.PositionInitialized = true;
                 visual.MovedThisTick = false;
@@ -651,7 +651,7 @@ namespace qUAckzak.Mod.QuackHat
                     float nextX = MoveTowards(previous.x, target.x, component.Speed);
                     if (TryFindGround(nextX, target.y, out Vec2 ground))
                     {
-                        visual.Position = ground;
+                        visual.Position = PlaceOnGround(component, ground);
                     }
                     break;
             }
@@ -696,6 +696,14 @@ namespace qUAckzak.Mod.QuackHat
             }
 
             return closestDistance < float.MaxValue;
+        }
+
+        private static Vec2 PlaceOnGround(
+            QuackHatComponentDefinition component,
+            Vec2 ground)
+        {
+            ground.y -= component.FrameHeight / 2f;
+            return ground;
         }
 
         private static Vec2 MoveTowards(Vec2 current, Vec2 target, float maximumDistance)
