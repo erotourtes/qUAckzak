@@ -568,5 +568,9 @@ effects must be tested before adding an event protocol.
     an attached saber glint, and three per-level death-animation variants.
     Every effect is a four-frame sheet with movement, scale, and fading baked
     into the art so it can use the existing component and online models.
-18. Test pet selection, glint, and death effects online before extending the
+18. **Done:** retain the last living duck transform for the death tick. Duck
+    Game can unequip the hat and teleport or hide the duck as part of a kill;
+    attached death frames, spirits, and detached death variants now start at
+    the visible pre-death position instead of following that disappearance.
+19. Test pet selection, glint, and death effects online before extending the
     network design.

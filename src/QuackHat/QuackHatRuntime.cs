@@ -244,6 +244,8 @@ namespace qUAckzak.Mod.QuackHat
 
         private sbyte _previousOffDir;
         private bool _wasDead;
+        private QuackHatTransformSnapshot _rootTransform;
+        private bool _rootVisible;
 
         public QuackHatDuckVisual(
             Level level,
@@ -264,6 +266,7 @@ namespace qUAckzak.Mod.QuackHat
             _definitions = definition.Components.ToDictionary(
                 component => component.Id,
                 StringComparer.Ordinal);
+            CaptureRootTransform();
             _previousOffDir = duck.offDir;
             _wasDead = duck.dead;
 
@@ -312,6 +315,12 @@ namespace qUAckzak.Mod.QuackHat
 
         public void Update()
         {
+            bool diedThisTick = !_wasDead && _duck.dead;
+            if (!_duck.dead)
+            {
+                CaptureRootTransform();
+            }
+
             QuackHatDuckAnimationState state = new()
             {
                 Netted = _duck.inNet,
@@ -324,7 +333,7 @@ namespace qUAckzak.Mod.QuackHat
             };
             QuackHatAnimationEvents events = new()
             {
-                Death = !_wasDead && _duck.dead,
+                Death = diedThisTick,
                 DirectionChanged = _previousOffDir != 0
                     && _duck.offDir != 0
                     && _previousOffDir != _duck.offDir
@@ -452,18 +461,18 @@ namespace qUAckzak.Mod.QuackHat
             componentState.IsFollower = visual.IsFollower;
             componentState.FollowerMoving = visual.FollowerMoving;
             visual.Animation.Update(componentState, events);
-            visual.Angle = parentVisual?.Angle ?? _duck.angle;
-            visual.Scale = parentVisual?.Scale ?? _duck.scale;
-            visual.Alpha = parentVisual?.Alpha ?? _duck.alpha;
+            visual.Angle = parentVisual?.Angle ?? _rootTransform.Angle;
+            visual.Scale = parentVisual?.Scale ?? _rootTransform.Scale;
+            visual.Alpha = parentVisual?.Alpha ?? _rootTransform.Alpha;
             visual.OffDir = ResolveFacing(
                 component.Facing,
-                parentVisual?.OffDir ?? _duck.offDir,
+                parentVisual?.OffDir ?? _rootTransform.OffDir,
                 visual);
             visual.Depth = ResolveDepth(
                 component.RenderLayer,
-                parentVisual?.Depth ?? _duck.depth);
+                parentVisual?.Depth ?? _rootTransform.Depth);
             visual.Visible = visual.Animation.Visible
-                && (parentVisual?.Visible ?? _duck.visible)
+                && (parentVisual?.Visible ?? _rootVisible)
                 && !_duck.removeFromLevel;
             visual.Rendered.Apply(
                 visual.Animation.Frame,
@@ -550,7 +559,7 @@ namespace qUAckzak.Mod.QuackHat
                 }
             }
 
-            bool parentVisible = parentVisual?.Visible ?? _duck.visible;
+            bool parentVisible = parentVisual?.Visible ?? _rootVisible;
             if (!parentVisible || _duck.removeFromLevel)
             {
                 transform = default;
@@ -562,17 +571,17 @@ namespace qUAckzak.Mod.QuackHat
                 QuackHatFacing.Fixed => 1,
                 QuackHatFacing.Movement when parentVisual?.MovementDirection != 0 =>
                     parentVisual.MovementDirection,
-                _ => parentVisual?.OffDir ?? _duck.offDir
+                _ => parentVisual?.OffDir ?? _rootTransform.OffDir
             };
             transform = new QuackHatTransformSnapshot(
                 GetTarget(component, parentVisual),
-                parentVisual?.Angle ?? _duck.angle,
-                parentVisual?.Scale ?? _duck.scale,
-                parentVisual?.Alpha ?? _duck.alpha,
+                parentVisual?.Angle ?? _rootTransform.Angle,
+                parentVisual?.Scale ?? _rootTransform.Scale,
+                parentVisual?.Alpha ?? _rootTransform.Alpha,
                 offDir,
                 ResolveDepth(
                     component.RenderLayer,
-                    parentVisual?.Depth ?? _duck.depth));
+                    parentVisual?.Depth ?? _rootTransform.Depth));
             return true;
         }
 
@@ -609,7 +618,11 @@ namespace qUAckzak.Mod.QuackHat
         {
             Vec2 offset = new(component.OffsetX, component.OffsetY);
             return component.ParentKind == QuackHatParentKind.Duck
-                ? _duck.anchorPosition + _duck.OffsetLocal(offset)
+                ? _rootTransform.Position + QuackHatTransform.OffsetLocal(
+                    offset,
+                    _rootTransform.Angle,
+                    _rootTransform.Scale,
+                    _rootTransform.OffDir)
                 : parent.Position + QuackHatTransform.OffsetLocal(
                     offset,
                     parent.Angle,
@@ -745,11 +758,23 @@ namespace qUAckzak.Mod.QuackHat
             return layer switch
             {
                 QuackHatRenderLayer.Inherit => parentDepth,
-                QuackHatRenderLayer.Behind => _duck.depth + Duck.BackpackDepth,
-                QuackHatRenderLayer.Front => _duck.depth + EquippedHatDepth,
-                QuackHatRenderLayer.Foreground => _duck.depth + ForegroundDepth,
+                QuackHatRenderLayer.Behind => _rootTransform.Depth + Duck.BackpackDepth,
+                QuackHatRenderLayer.Front => _rootTransform.Depth + EquippedHatDepth,
+                QuackHatRenderLayer.Foreground => _rootTransform.Depth + ForegroundDepth,
                 _ => parentDepth
             };
+        }
+
+        private void CaptureRootTransform()
+        {
+            _rootTransform = new QuackHatTransformSnapshot(
+                _duck.anchorPosition,
+                _duck.angle,
+                _duck.scale,
+                _duck.alpha,
+                _duck.offDir,
+                _duck.depth);
+            _rootVisible = _duck.visible;
         }
 
         private sealed class QuackHatVisualComponent
