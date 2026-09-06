@@ -197,7 +197,168 @@ The runtime normally compares root teams by object reference. It also compares
 their `hatID`, because Duck Game can recreate or deserialize an equivalent
 `Team` object during networking.
 
-## 3. Preparing components for online play
+## 3. How online play makes this possible
+
+It is reasonable to expect an online game to have one server that receives
+everyone's inputs, calculates the whole world, and sends the result back. That
+is a common architecture, but it is not the only one, and it is not a complete
+description of Duck Game's networking.
+
+### The classic authoritative-server model
+
+In a strictly server-authoritative game, the data flow is approximately:
+
+```text
+player input -----> authoritative server -----> world snapshots
+                        |
+                        `---- physics, hits, deaths, and rules happen here
+```
+
+The client may predict its own movement immediately so controls do not feel one
+network round trip late, but the server's result wins if they disagree. Remote
+objects are usually drawn between received snapshots using interpolation. This
+model is attractive for competitive games because clients are not trusted to
+declare that they hit something or moved somewhere valid.
+
+A variation uses one player's game as a *listen server*: it is both that
+player's client and the authoritative server for the match. Another variation
+is deterministic lockstep, where every machine receives the same inputs and
+runs the same simulation. Real games often mix these techniques rather than
+following one model everywhere.
+
+### Duck Game distributes authority by object
+
+Duck Game has a host and also supports server roles for coordinating the
+session, lobby, level transitions, and other global decisions. Gameplay
+objects, however, have their own owning `NetworkConnection`. The machine that
+owns a particular object is allowed to simulate and publish that object's
+authoritative state.
+
+This is visible in Duck Game Rebuilt's
+[`Thing.cs`](../../docs/DuckGameRebuilt/DuckGame/src/DuckGame/Thing.cs). A
+`Thing` stores `connection` and `authority`, and exposes `isServerForObject`.
+Despite the name, `isServerForObject` does **not** mean “this process is the
+match's central server.” During online play it is also true when the object's
+connection is the local connection. A useful way to read it is:
+
+> Is this machine currently responsible for calculating this object?
+
+For example, your machine is normally responsible for your duck and things it
+creates or controls. Another player's machine is responsible for that player's
+duck. Ownership of interactive objects can be transferred; Duck Game calls
+this process “fondling” in methods such as `Fondle()` and `TransferControl()`.
+The authority counter helps competing ownership transfers resolve consistently.
+
+Each machine still has a local `Thing` representing remote objects. Duck
+Game's [`GhostObject.cs`](../../docs/DuckGameRebuilt/DuckGame/src/DuckGame/Network/GhostObject.cs)
+connects an authoritative object to those remote copies, commonly called
+*ghosts*. It does not serialize every C# field. It serializes fields registered
+through `StateBinding` objects, tracks which values changed, and sends compact
+delta state. Received states are buffered and applied to the remote object;
+positions and similar properties can be interpolated so network updates look
+smoother than the packet rate.
+
+For objects implementing `ITakeInput`, ghost data can also carry recent input
+states and feed them into a remote virtual input device. So Duck Game is not
+purely “send inputs” or purely “send positions.” It has a hybrid system:
+
+- continuously changing object properties use ghost state;
+- recent controls can accompany suitable controlled objects;
+- discrete occurrences use explicit network messages;
+- ownership decides which machine is authoritative for each object.
+
+For instance,
+[`PhysicsObject.cs`](../../docs/DuckGameRebuilt/DuckGame/src/DuckGame/PhysicsObject.cs)
+binds position, velocity, angle, facing, owner, and physics flags. A
+[`TeamHat`](../../docs/DuckGameRebuilt/DuckGame/src/DuckGame/Equipment/TeamHat.cs)
+inherits those physics bindings and adds a binding for its native team index.
+That existing state is precisely what qUAckhat reuses.
+
+### State, assets, and behavior are different things
+
+Showing a custom image remotely requires three separate questions to be
+answered:
+
+1. **Asset:** does the receiving machine have the pixels?
+2. **State:** which object, image frame, position, angle, and facing should it
+   draw now?
+3. **Behavior:** which machine decides how those values change next?
+
+qUAckhat sends the asset as a native custom hat, represents the state as native
+`TeamHat` objects, and runs the behavior only on the duck owner's machine.
+This is why the receiver does not need our component engine.
+
+The owner-side flow is:
+
+```text
+local Duck state
+      |
+      v
+qUAckhat calculates component transforms and animation frames
+      |
+      v
+local native TeamHat tiles are updated
+      |
+      v
+Duck Game GhostObject serializes their bound native state
+      |
+      v
+remote Duck Game updates and draws ghost TeamHat tiles
+```
+
+Before those tile objects refer to a custom team index, qUAckhat sends each
+frame's image using Duck Game's standard
+[`NMSpecialHat`](../../docs/DuckGameRebuilt/DuckGame/src/DuckGame/Network/NMSpecialHat.cs)
+message. The receiver's unmodified Duck Game already knows how to decode that
+message and register the image as a `Team`. Later, when ghost state says a tile
+uses that team's index, the native `TeamHat` knows which sprite to draw.
+
+The remote player receives neither `hat.xml` nor instructions such as “use the
+airborne animation.” They receive the native images and a changing collection
+of native object states. To their game, these are simply custom hats moving
+around the level.
+
+### Why qUAckhat simulates only the local duck online
+
+Every qUAckzak client can see all `Duck` objects, including remote ghosts. If
+each client ran component behavior for every duck, the owner's networked tiles
+would arrive and the receiver would also create its own local tiles for the
+same duck. The hat would be duplicated. Timing, collision queries, or random
+effects could also diverge slightly between machines.
+
+`QuackHatRuntime` therefore checks `duck.profile.localPlayer` online. Only the
+owner calculates a duck's components. Everyone else consumes the native ghosts
+produced by that calculation. Offline every duck is local, so the same check is
+unnecessary.
+
+This is called **owner-authoritative cosmetic simulation**. It is appropriate
+here because our objects are deliberately nonphysical visuals: they do not
+decide hits, movement, scores, or deaths. A gameplay-changing feature would
+need much more care. Trusting a client to authoritatively create damaging or
+collidable objects could become a cheat, and an unmodded receiver would not
+know custom rules that were implemented only in our DLL.
+
+### What the host still does—and what it does not do for us
+
+The existence of per-object authority does not make the host irrelevant. Duck
+Game still gives the host special responsibilities for establishing the
+session and coordinating global match state. It can also own objects for which
+the host is responsible. But the host does not run qUAckhat's XML parser,
+animation player, or component controllers on behalf of another player.
+
+Our mod works with an unmodded host because it stays inside vocabulary every
+Duck Game client already understands:
+
+- native custom-hat asset messages;
+- native `Team` indices;
+- native ghosted `TeamHat` objects;
+- native position, angle, facing, visibility, and removal state.
+
+That is also the boundary of compatibility. We can only expect unmodded peers
+to reproduce properties the native protocol knows how to send. The next
+section explains how component art is converted into that vocabulary.
+
+## 4. Preparing components for online play
 
 ### Why a component becomes many hidden hats
 
@@ -248,7 +409,7 @@ look identical to an unmodded peer should therefore bake size and fading into
 their frames. Very fast animations may also skip intermediate frames under
 real network conditions.
 
-## 4. Loading as a transaction
+## 5. Loading as a transaction
 
 `QuackHatService.cs` owns the complete catalog. For each package it coordinates
 the manifest loader, texture loader, root registry, and network asset registry.
@@ -270,7 +431,7 @@ half-loaded one. Packages removed from disk are unregistered and unloaded.
 `FindByTeam()` is the bridge from normal Duck Game equipment to qUAckhat data.
 Given the `Team` worn by a duck, it returns the matching loaded definition.
 
-## 5. Making deterministic level choices
+## 6. Making deterministic level choices
 
 `QuackHatLevelChoices.cs` resolves choices that should remain stable throughout
 a level:
@@ -292,7 +453,7 @@ There is an important split here:
 - `QuackHatAnimationPlayer` decides *which trigger and frame* is active now.
 - `QuackHatDuckVisual` decides *where that frame is placed* for one duck.
 
-## 6. Following one duck every tick
+## 7. Following one duck every tick
 
 Most orchestration lives in `QuackHatRuntime.cs`.
 
@@ -364,7 +525,7 @@ based on Duck Game's own backpack and wing depth conventions. This keeps a
 component on the intended side of the duck without requiring the XML author to
 know raw depth numbers.
 
-## 7. Selecting and advancing animations
+## 8. Selecting and advancing animations
 
 `QuackHatAnimationPlayer.cs` owns mutable playback state for one component. A
 static component with no animations simply displays frame zero. Animated
@@ -395,7 +556,7 @@ If XML provides several animations for the same trigger, the animation player
 uses the variant chosen by `QuackHatLevelChoices`; it does not reroll every time
 the trigger activates.
 
-## 8. Rendering offline and online
+## 9. Rendering offline and online
 
 `QuackHatRenderedVisual.cs` hides two substantially different implementations
 behind `IQuackHatRenderedVisual`:
@@ -435,7 +596,7 @@ event visuals flashing unexpectedly.
 offset, mirrors it for left-facing art, rotates it, and returns the world-space
 offset used by both components and network tiles.
 
-## 9. Emitters and detached effects
+## 10. Emitters and detached effects
 
 ### `QuackHatEmitterRuntime.cs`
 
@@ -467,7 +628,7 @@ therefore remembers the last visible live root transform and uses it as the
 death-effect origin. It also retains a dead duck's visual briefly when the root
 hat is no longer discoverable, allowing attached death animations to finish.
 
-## 10. Cleanup and lifecycle boundaries
+## 11. Cleanup and lifecycle boundaries
 
 qUAckhat creates real Duck Game `Thing` objects, so every creation path needs a
 matching removal path.
@@ -483,7 +644,7 @@ matching removal path.
 Keeping these boundaries explicit prevents invisible objects, textures, and
 custom-hat registrations from accumulating across rounds or reloads.
 
-## 11. A concrete example: the moustache
+## 12. A concrete example: the moustache
 
 Suppose the Cossack manifest defines a moustache attached to the duck with a
 default animation and a running animation.
@@ -508,7 +669,7 @@ When the duck stops, the next snapshot selects `idle` or `default` and the
 player begins that animation. No moustache-specific C# exists: all of this is
 the generic component, trigger, controller, and renderer pipeline.
 
-## 12. Diagnosing problems
+## 13. Diagnosing problems
 
 The console command `quackzak_quackhat_status` reports package load failures,
 the current offline/online runtime mode, active wearers, selected groups and
@@ -537,7 +698,7 @@ when following types such as `Duck`, `Team`, `TeamHat`, `NMSpecialHat`,
 `SpriteThing`, and `Teams`. qUAckhat relies on their native behavior instead of
 duplicating it.
 
-## 13. Extending the engine
+## 14. Extending the engine
 
 Most features cross more than one layer. The following checklists show the
 usual change path.
