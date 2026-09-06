@@ -217,7 +217,7 @@ child, so they inherit both selection and movement.
 <component id="windmill-wings" sprite="components/pets/windmill-wings.png"
            frameWidth="32" frameHeight="32" parent="windmill"
            layer="inherit">
-  <animation trigger="default" firstFrame="0" lastFrame="5"
+  <animation trigger="default" firstFrame="0" lastFrame="3"
              ticksPerFrame="3" />
 </component>
 ```
@@ -318,7 +318,7 @@ The banner is behind the duck with its own looping cloth animation.
 <component id="banner" sprite="components/decorations/banner.png"
            frameWidth="32" frameHeight="32" offsetX="-7" offsetY="-4"
            layer="behind">
-  <animation trigger="default" firstFrame="0" lastFrame="5"
+  <animation trigger="default" firstFrame="0" lastFrame="3"
              ticksPerFrame="4" />
 </component>
 ```
@@ -343,7 +343,7 @@ instance remains where it was created.
 <component id="sunflower" sprite="components/effects/sunflower.png"
            frameWidth="24" frameHeight="24" offsetY="10"
            layer="behind" facing="fixed">
-  <animation trigger="default" firstFrame="0" lastFrame="5"
+  <animation trigger="default" firstFrame="0" lastFrame="3"
              ticksPerFrame="4" />
   <emitter condition="running" cadence="distance"
            minimumInterval="8" maximumInterval="16" />
@@ -361,7 +361,7 @@ position rather than continuing to follow the duck.
 ```xml
 <component id="pipe-smoke" sprite="components/effects/pipe-smoke.png"
            frameWidth="16" frameHeight="16" parent="pipe" offsetY="-3">
-  <animation trigger="default" firstFrame="0" lastFrame="5"
+  <animation trigger="default" firstFrame="0" lastFrame="3"
              ticksPerFrame="4" />
   <emitter condition="default" cadence="time"
            minimumInterval="30" maximumInterval="60" />
@@ -375,9 +375,9 @@ once; rising and fading are drawn into the animation.
 
 ```xml
 <component id="spirit" sprite="components/effects/spirit.png"
-           frameWidth="32" frameHeight="32" offsetY="-8"
+           frameWidth="32" frameHeight="48" offsetY="-8"
            layer="foreground" controller="world_one_shot">
-  <animation trigger="death" firstFrame="0" lastFrame="7"
+  <animation trigger="death" firstFrame="0" lastFrame="3"
              ticksPerFrame="5" />
 </component>
 ```
@@ -393,7 +393,7 @@ whole animation. It is not an emitted particle.
 <component id="saber-glint" sprite="components/effects/saber-glint.png"
            frameWidth="16" frameHeight="16" parent="saber"
            offsetX="4" offsetY="-5" layer="foreground">
-  <animation trigger="direction_changed" firstFrame="0" lastFrame="4"
+  <animation trigger="direction_changed" firstFrame="0" lastFrame="3"
              ticksPerFrame="3" />
 </component>
 ```
@@ -407,11 +407,11 @@ level start and reused for all deaths in that level.
 <component id="death-animation" sprite="components/effects/death-animation.png"
            frameWidth="48" frameHeight="48" layer="foreground"
            controller="world_one_shot">
-  <animation trigger="death" firstFrame="0" lastFrame="5"
+  <animation trigger="death" firstFrame="0" lastFrame="3"
              ticksPerFrame="4" />
-  <animation trigger="death" firstFrame="6" lastFrame="12"
+  <animation trigger="death" firstFrame="4" lastFrame="7"
              ticksPerFrame="4" />
-  <animation trigger="death" firstFrame="13" lastFrame="20"
+  <animation trigger="death" firstFrame="8" lastFrame="11"
              ticksPerFrame="4" />
 </component>
 ```
@@ -564,6 +564,9 @@ effects must be tested before adding an event protocol.
     sizes, animations, and render layers.
 15. Test animated hair between two qUAckzak clients.
 16. Test with a receiving client without qUAckzak.
-17. Add the remaining effect art described above.
+17. **Done:** add running sunflower and pipe-smoke emitters, a rising spirit,
+    an attached saber glint, and three per-level death-animation variants.
+    Every effect is a four-frame sheet with movement, scale, and fading baked
+    into the art so it can use the existing component and online models.
 18. Test pet selection, glint, and death effects online before extending the
     network design.

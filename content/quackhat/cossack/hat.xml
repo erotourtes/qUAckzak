@@ -152,4 +152,84 @@
              sprite="components/decorations/saber.png"
              offsetX="8"
              offsetY="4" />
+
+  <component id="sunflower"
+             sprite="components/effects/sunflower.png"
+             frameWidth="24"
+             frameHeight="24"
+             offsetY="10"
+             layer="behind"
+             facing="fixed">
+    <animation trigger="default"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="4" />
+    <emitter condition="running"
+             cadence="distance"
+             minimumInterval="8"
+             maximumInterval="16" />
+  </component>
+
+  <component id="pipe-smoke"
+             sprite="components/effects/pipe-smoke.png"
+             frameWidth="16"
+             frameHeight="16"
+             parent="pipe"
+             offsetY="-3">
+    <animation trigger="default"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="4" />
+    <emitter condition="default"
+             cadence="time"
+             minimumInterval="30"
+             maximumInterval="60" />
+  </component>
+
+  <component id="spirit"
+             sprite="components/effects/spirit.png"
+             frameWidth="32"
+             frameHeight="48"
+             offsetY="-8"
+             layer="foreground"
+             controller="world_one_shot">
+    <animation trigger="death"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="5" />
+  </component>
+
+  <component id="saber-glint"
+             sprite="components/effects/saber-glint.png"
+             frameWidth="16"
+             frameHeight="16"
+             parent="saber"
+             offsetX="4"
+             offsetY="-5"
+             layer="foreground">
+    <animation trigger="direction_changed"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="3" />
+  </component>
+
+  <component id="death-animation"
+             sprite="components/effects/death-animation.png"
+             frameWidth="48"
+             frameHeight="48"
+             layer="foreground"
+             controller="world_one_shot">
+    <animation trigger="death"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="4" />
+    <animation trigger="death"
+               firstFrame="4"
+               lastFrame="7"
+               ticksPerFrame="4" />
+    <animation trigger="death"
+               firstFrame="8"
+               lastFrame="11"
+               ticksPerFrame="4" />
+  </component>
 </hat>
