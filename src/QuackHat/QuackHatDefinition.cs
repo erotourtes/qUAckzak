@@ -76,6 +76,7 @@ namespace qUAckzak.Mod.QuackHat
         public int FrameWidth { get; set; }
         public int FrameHeight { get; set; }
         public int FrameCount { get; set; }
+        public IReadOnlyList<QuackHatNetworkTileDefinition> NetworkTiles { get; set; }
         public QuackHatParentKind ParentKind { get; set; }
         public string ParentComponentId { get; set; }
         public float OffsetX { get; set; }
@@ -87,6 +88,13 @@ namespace qUAckzak.Mod.QuackHat
         public string Group { get; set; }
         public IReadOnlyList<QuackHatAnimationDefinition> Animations { get; set; }
         public QuackHatEmitterDefinition Emitter { get; set; }
+    }
+
+    internal sealed class QuackHatNetworkTileDefinition
+    {
+        public float OffsetX { get; set; }
+        public float OffsetY { get; set; }
+        public IReadOnlyList<Team> FrameTeams { get; set; }
     }
 
     internal sealed class QuackHatAnimationDefinition

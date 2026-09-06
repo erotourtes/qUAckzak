@@ -27,11 +27,22 @@ namespace qUAckzak.Mod.QuackHat
         {
             return team == null
                 ? null
-                : _hats.FirstOrDefault(hat => ReferenceEquals(hat.RootTeam, team));
+                : _hats.FirstOrDefault(hat => ReferenceEquals(hat.RootTeam, team)
+                    || string.Equals(
+                        hat.RootTeam?.hatID,
+                        team.hatID,
+                        StringComparison.Ordinal));
         }
 
         public void Reload()
         {
+            if (Network.isActive)
+            {
+                DevConsole.Log(
+                    "|RED|qUAckhat cannot reload during an online session because native hat indices must remain stable.");
+                return;
+            }
+
             Reloading?.Invoke();
 
             List<QuackHatDefinition> hats = new();
@@ -72,6 +83,15 @@ namespace qUAckzak.Mod.QuackHat
                         try
                         {
                             QuackHatRootHatRegistry.Register(hat);
+                            try
+                            {
+                                QuackHatNetworkAssetRegistry.Register(hat);
+                            }
+                            catch
+                            {
+                                QuackHatRootHatRegistry.Replace(hat, null);
+                                throw;
+                            }
                         }
                         catch
                         {
@@ -107,6 +127,7 @@ namespace qUAckzak.Mod.QuackHat
                     continue;
                 }
 
+                QuackHatNetworkAssetRegistry.Unregister(oldHat);
                 QuackHatRootHatRegistry.Replace(oldHat, replacement);
                 QuackHatAssetLoader.Unload(oldHat);
             }
