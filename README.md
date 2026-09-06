@@ -80,6 +80,10 @@ running state changes, one randomly selected pet per level, attached
 decorations, time- and distance-based emitters, an attached direction-change
 glint, and randomly selected death effects.
 
+See [`hat.md`](hat.md) for the package-authoring format and
+[`src/QuackHat/README.md`](src/QuackHat/README.md) for a file-by-file tour of
+the C# runtime.
+
 - Run `quackzak_quackhat_status` to list loaded packages and manifest errors,
   then report the runtime mode, active wearers, selected component-group member
   (such as the pet), selected animation variant, and live one-shot count.
