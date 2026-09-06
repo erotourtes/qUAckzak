@@ -8,10 +8,13 @@ namespace qUAckzak.Mod.Modes
         public const string ToggleTrigger = "TURBOQUACK";
 
         private const float RagdollNudgeTimerPerFrame = 0.07f;
+        private const int NetJumpRepeatIntervalTicks = 8;
 
         private readonly List<InjectedInput> _injectedInputs = new();
 
         private bool _enabled;
+        private bool _netJumpWasHeld;
+        private int _netJumpHeldTicks;
 
         public string Name => "turboqUAck";
 
@@ -23,6 +26,7 @@ namespace qUAckzak.Mod.Modes
 
             if (MonoMain.shouldPauseGameplay)
             {
+                ResetNetJumpRepeat();
                 return;
             }
 
@@ -41,11 +45,13 @@ namespace qUAckzak.Mod.Modes
 
             if (duck is null || duckInputProfile is null || duckInputProfile is DuckAI)
             {
+                ResetNetJumpRepeat();
                 return;
             }
 
             if (!_enabled)
             {
+                ResetNetJumpRepeat();
                 return;
             }
 
@@ -56,6 +62,7 @@ namespace qUAckzak.Mod.Modes
         public void Reset()
         {
             RemoveInjectedInputs();
+            ResetNetJumpRepeat();
         }
 
         private static Profile GetCurrentProfile()
@@ -111,15 +118,73 @@ namespace qUAckzak.Mod.Modes
             Inject(inputProfile, heldDirection);
         }
 
+        // Previous implementation, retained to document the balance change:
+        //
+        // private void UpdateTrappedJump(Duck duck, InputProfile inputProfile)
+        // {
+        //     bool isTrapped = duck.inNet || duck.ragdoll?.inSleepingBag == true;
+        //     if (!isTrapped || !inputProfile.Down(Triggers.Jump))
+        //     {
+        //         return;
+        //     }
+        //
+        //     Inject(inputProfile, Triggers.Jump);
+        // }
+        //
+        // InputProfile treats an injected input as Pressed on every simulation
+        // tick. Nets have no internal struggle cooldown, so the old version
+        // generated 60 presses per second and escaped much faster than a player
+        // could reasonably mash. Sleeping bags do have a native cooldown, so
+        // they now receive a pulse only when that cooldown can accept it.
         private void UpdateTrappedJump(Duck duck, InputProfile inputProfile)
         {
-            bool isTrapped = duck.inNet || duck.ragdoll?.inSleepingBag == true;
-            if (!isTrapped || !inputProfile.Down(Triggers.Jump))
+            if (duck.dead || !inputProfile.Down(Triggers.Jump))
+            {
+                ResetNetJumpRepeat();
+                return;
+            }
+
+            if (duck.inNet)
+            {
+                UpdateNetJump(inputProfile);
+                return;
+            }
+
+            ResetNetJumpRepeat();
+
+            Ragdoll ragdoll = duck.ragdoll;
+            if (ragdoll?.inSleepingBag != true ||
+                ragdoll._timeSinceNudge + RagdollNudgeTimerPerFrame <= 1f)
             {
                 return;
             }
 
             Inject(inputProfile, Triggers.Jump);
+        }
+
+        private void UpdateNetJump(InputProfile inputProfile)
+        {
+            if (!_netJumpWasHeld)
+            {
+                _netJumpWasHeld = true;
+                _netJumpHeldTicks = 0;
+                return;
+            }
+
+            _netJumpHeldTicks++;
+            if (_netJumpHeldTicks < NetJumpRepeatIntervalTicks)
+            {
+                return;
+            }
+
+            _netJumpHeldTicks = 0;
+            Inject(inputProfile, Triggers.Jump);
+        }
+
+        private void ResetNetJumpRepeat()
+        {
+            _netJumpWasHeld = false;
+            _netJumpHeldTicks = 0;
         }
 
         private static string GetHeldDirection(InputProfile inputProfile)
