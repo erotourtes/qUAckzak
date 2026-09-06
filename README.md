@@ -81,5 +81,6 @@ their XSD-validated `hat.xml` manifests.
   including looping duck-state animations and one-shot death/direction-change
   animations. Per-level selection groups and duplicate animation variants are
   also supported. Flying and ground followers use their configured speed,
-  movement-facing direction, and follower animation states. Effects and online
-  component rendering are the next implementation slices.
+  movement-facing direction, and follower animation states. Attached events,
+  detached death/direction effects, and time/distance emitters work offline.
+  Online component rendering is the next implementation slice.

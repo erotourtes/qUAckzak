@@ -524,7 +524,11 @@ protocol.
    projecting them onto the nearest walkable platform below their target.
    Movement-facing and `follower_moving`/`follower_idle` animations propagate
    to attached child components.
-7. Implement attached events, world one-shots, and emitters.
+7. **Done:** keep attached event animations on their live component transform,
+   snapshot `world_one_shot` death/direction events into independent visuals,
+   and emit independent one-shots on random inclusive time or travelled-distance
+   intervals while their configured state is active. Finished instances remove
+   themselves and do not alter Duck Game's gameplay RNG.
 8. Test animated hair between two qUAckzak clients.
 9. Test with a receiving client without qUAckzak.
 10. Test pet selection, glint, and death effects online before extending the

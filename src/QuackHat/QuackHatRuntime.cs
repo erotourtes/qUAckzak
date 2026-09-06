@@ -12,6 +12,7 @@ namespace qUAckzak.Mod.QuackHat
         private readonly Dictionary<Duck, QuackHatDuckVisual> _visuals = new();
         private readonly Dictionary<QuackHatDefinition, QuackHatLevelChoices> _levelChoices =
             new();
+        private readonly List<QuackHatOneShotVisual> _oneShots = new();
 
         public QuackHatRuntime(QuackHatService service)
         {
@@ -29,6 +30,8 @@ namespace qUAckzak.Mod.QuackHat
                 Reset();
                 return;
             }
+
+            UpdateOneShots();
 
             foreach (QuackHatDefinition definition in _service.Hats)
             {
@@ -64,7 +67,8 @@ namespace qUAckzak.Mod.QuackHat
                             level,
                             duck,
                             definition,
-                            GetLevelChoices(definition, level.seed));
+                            GetLevelChoices(definition, level.seed),
+                            SpawnOneShot);
                         _visuals.Add(duck, visual);
                     }
                     catch (Exception exception)
@@ -93,8 +97,14 @@ namespace qUAckzak.Mod.QuackHat
                 visual.Remove();
             }
 
+            foreach (QuackHatOneShotVisual oneShot in _oneShots)
+            {
+                oneShot.Remove();
+            }
+
             _visuals.Clear();
             _levelChoices.Clear();
+            _oneShots.Clear();
         }
 
         private void RemoveVisual(Duck duck)
@@ -122,6 +132,37 @@ namespace qUAckzak.Mod.QuackHat
 
             return choices;
         }
+
+        private void UpdateOneShots()
+        {
+            for (int index = _oneShots.Count - 1; index >= 0; index--)
+            {
+                if (!_oneShots[index].Update())
+                {
+                    _oneShots.RemoveAt(index);
+                }
+            }
+        }
+
+        private void SpawnOneShot(
+            QuackHatComponentDefinition component,
+            QuackHatAnimationDefinition animation,
+            QuackHatTransformSnapshot transform)
+        {
+            try
+            {
+                _oneShots.Add(new QuackHatOneShotVisual(
+                    Level.current,
+                    component,
+                    animation,
+                    transform));
+            }
+            catch (Exception exception)
+            {
+                DevConsole.Log(
+                    $"|RED|qUAckhat could not create effect '{component.Id}': {exception.Message}");
+            }
+        }
     }
 
     internal sealed class QuackHatDuckVisual
@@ -137,8 +178,14 @@ namespace qUAckzak.Mod.QuackHat
         private readonly Duck _duck;
         private readonly IReadOnlyDictionary<string, QuackHatComponentDefinition> _definitions;
         private readonly QuackHatLevelChoices _choices;
+        private readonly Action<
+            QuackHatComponentDefinition,
+            QuackHatAnimationDefinition,
+            QuackHatTransformSnapshot> _spawnOneShot;
         private readonly Dictionary<string, QuackHatVisualComponent> _components =
             new(StringComparer.Ordinal);
+        private readonly List<QuackHatComponentDefinition> _worldOneShots = new();
+        private readonly List<QuackHatEmitterComponent> _emitters = new();
 
         private sbyte _previousOffDir;
         private bool _wasDead;
@@ -147,11 +194,16 @@ namespace qUAckzak.Mod.QuackHat
             Level level,
             Duck duck,
             QuackHatDefinition definition,
-            QuackHatLevelChoices choices)
+            QuackHatLevelChoices choices,
+            Action<
+                QuackHatComponentDefinition,
+                QuackHatAnimationDefinition,
+                QuackHatTransformSnapshot> spawnOneShot)
         {
             _level = level;
             _duck = duck;
             _choices = choices;
+            _spawnOneShot = spawnOneShot;
             Definition = definition;
             _definitions = definition.Components.ToDictionary(
                 component => component.Id,
@@ -193,6 +245,8 @@ namespace qUAckzak.Mod.QuackHat
                             thing,
                             _choices.GetAnimations(component.Id)));
                 }
+
+                CreateEffectControllers(definition.Components);
             }
             catch
             {
@@ -229,6 +283,9 @@ namespace qUAckzak.Mod.QuackHat
                 UpdateComponent(componentId, state, events, updated);
             }
 
+            SpawnWorldOneShots(events);
+            UpdateEmitters(state);
+
             _previousOffDir = _duck.offDir;
             _wasDead = _duck.dead;
         }
@@ -245,6 +302,41 @@ namespace qUAckzak.Mod.QuackHat
             }
 
             _components.Clear();
+            _worldOneShots.Clear();
+            _emitters.Clear();
+        }
+
+        private void CreateEffectControllers(
+            IReadOnlyList<QuackHatComponentDefinition> definitions)
+        {
+            int duckIndex = _duck.profile?.networkIndex ?? 0;
+            foreach (QuackHatComponentDefinition component in definitions)
+            {
+                if (!_choices.IsComponentSelected(component.Id)
+                    || !HasLiveParent(component))
+                {
+                    continue;
+                }
+
+                if (component.Controller == QuackHatController.WorldOneShot)
+                {
+                    _worldOneShots.Add(component);
+                }
+                else if (component.Emitter != null)
+                {
+                    _emitters.Add(new QuackHatEmitterComponent(
+                        component,
+                        new QuackHatEmitterRuntime(
+                            component.Emitter,
+                            _choices.CreateEmitterRandom(component.Id, duckIndex))));
+                }
+            }
+        }
+
+        private bool HasLiveParent(QuackHatComponentDefinition component)
+        {
+            return component.ParentKind == QuackHatParentKind.Duck
+                || _components.ContainsKey(component.ParentComponentId);
         }
 
         private bool IsRenderableComponent(
@@ -325,6 +417,138 @@ namespace qUAckzak.Mod.QuackHat
             thing.visible = visual.Animation.Visible
                 && parent.visible
                 && !_duck.removeFromLevel;
+        }
+
+        private void SpawnWorldOneShots(QuackHatAnimationEvents events)
+        {
+            QuackHatTrigger? trigger = events.Death
+                ? QuackHatTrigger.Death
+                : events.DirectionChanged
+                    ? QuackHatTrigger.DirectionChanged
+                    : null;
+            if (trigger == null)
+            {
+                return;
+            }
+
+            foreach (QuackHatComponentDefinition component in _worldOneShots)
+            {
+                if (_choices.TryGetAnimation(
+                        component.Id,
+                        trigger.Value,
+                        out QuackHatAnimationDefinition animation)
+                    && TryCreateSnapshot(component, out QuackHatTransformSnapshot transform))
+                {
+                    _spawnOneShot(component, animation, transform);
+                }
+            }
+        }
+
+        private void UpdateEmitters(QuackHatDuckAnimationState duckState)
+        {
+            foreach (QuackHatEmitterComponent emitter in _emitters)
+            {
+                if (!TryCreateSnapshot(
+                    emitter.Definition,
+                    out QuackHatTransformSnapshot transform))
+                {
+                    emitter.Runtime.Update(conditionActive: false, Vec2.Zero);
+                    continue;
+                }
+
+                QuackHatDuckAnimationState state = duckState;
+                if (emitter.Definition.ParentKind == QuackHatParentKind.Component)
+                {
+                    QuackHatVisualComponent parent =
+                        _components[emitter.Definition.ParentComponentId];
+                    state.IsFollower = parent.IsFollower;
+                    state.FollowerMoving = parent.FollowerMoving;
+                }
+
+                bool conditionActive = IsConditionActive(
+                    emitter.Definition.Emitter.Condition,
+                    state);
+                if (!emitter.Runtime.Update(conditionActive, transform.Position))
+                {
+                    continue;
+                }
+
+                QuackHatAnimationDefinition animation =
+                    _choices.GetEmitterAnimation(emitter.Definition);
+                if (animation != null)
+                {
+                    _spawnOneShot(emitter.Definition, animation, transform);
+                }
+            }
+        }
+
+        private bool TryCreateSnapshot(
+            QuackHatComponentDefinition component,
+            out QuackHatTransformSnapshot transform)
+        {
+            Thing parent = _duck;
+            QuackHatVisualComponent parentVisual = null;
+            if (component.ParentKind == QuackHatParentKind.Component)
+            {
+                if (!_components.TryGetValue(
+                    component.ParentComponentId,
+                    out parentVisual))
+                {
+                    transform = default;
+                    return false;
+                }
+
+                parent = parentVisual.Thing;
+            }
+
+            if (!parent.visible || _duck.removeFromLevel)
+            {
+                transform = default;
+                return false;
+            }
+
+            sbyte offDir = component.Facing switch
+            {
+                QuackHatFacing.Fixed => 1,
+                QuackHatFacing.Movement when parentVisual?.MovementDirection != 0 =>
+                    parentVisual.MovementDirection,
+                _ => parent.offDir
+            };
+            transform = new QuackHatTransformSnapshot(
+                GetTarget(component, parent),
+                parent.angle,
+                parent.scale,
+                parent.alpha,
+                offDir,
+                ResolveDepth(component.RenderLayer, parent.depth));
+            return true;
+        }
+
+        private static bool IsConditionActive(
+            QuackHatTrigger condition,
+            QuackHatDuckAnimationState state)
+        {
+            return condition switch
+            {
+                QuackHatTrigger.Default => true,
+                QuackHatTrigger.Idle => !state.Netted
+                    && !state.Ragdoll
+                    && !state.Sliding
+                    && !state.Airborne
+                    && !state.Running
+                    && !state.Crouching,
+                QuackHatTrigger.Running => state.Running,
+                QuackHatTrigger.Airborne => state.Airborne,
+                QuackHatTrigger.Crouching => state.Crouching,
+                QuackHatTrigger.Sliding => state.Sliding,
+                QuackHatTrigger.Ragdoll => state.Ragdoll,
+                QuackHatTrigger.Netted => state.Netted,
+                QuackHatTrigger.FollowerMoving =>
+                    state.IsFollower && state.FollowerMoving,
+                QuackHatTrigger.FollowerIdle =>
+                    state.IsFollower && !state.FollowerMoving,
+                _ => false
+            };
         }
 
         private Vec2 GetTarget(QuackHatComponentDefinition component, Thing parent)
@@ -489,6 +713,21 @@ namespace qUAckzak.Mod.QuackHat
             public bool IsFollower { get; set; }
 
             public bool FollowerMoving { get; set; }
+        }
+
+        private sealed class QuackHatEmitterComponent
+        {
+            public QuackHatEmitterComponent(
+                QuackHatComponentDefinition definition,
+                QuackHatEmitterRuntime runtime)
+            {
+                Definition = definition;
+                Runtime = runtime;
+            }
+
+            public QuackHatComponentDefinition Definition { get; }
+
+            public QuackHatEmitterRuntime Runtime { get; }
         }
     }
 }
