@@ -129,6 +129,9 @@ namespace qUAckzak.Mod.QuackHat
         private const int EquippedHatDepth = 6;
         private const int ForegroundDepth = Duck.WingDepth + 1;
         private const float RunningSpeedThreshold = 0.1f;
+        private const float MovementThreshold = 0.01f;
+        private const float GroundProbeAbove = 16f;
+        private const float GroundProbeBelowLevel = 32f;
 
         private readonly Level _level;
         private readonly Duck _duck;
@@ -161,7 +164,7 @@ namespace qUAckzak.Mod.QuackHat
                 Dictionary<string, bool> eligibility = new(StringComparer.Ordinal);
                 foreach (QuackHatComponentDefinition component in definition.Components)
                 {
-                    if (!IsRenderableAttached(component, eligibility))
+                    if (!IsRenderableComponent(component, eligibility))
                     {
                         continue;
                     }
@@ -244,7 +247,7 @@ namespace qUAckzak.Mod.QuackHat
             _components.Clear();
         }
 
-        private bool IsRenderableAttached(
+        private bool IsRenderableComponent(
             QuackHatComponentDefinition component,
             IDictionary<string, bool> eligibility)
         {
@@ -253,13 +256,16 @@ namespace qUAckzak.Mod.QuackHat
                 return eligible;
             }
 
-            eligible = component.Controller == QuackHatController.Attached
+            eligible = component.Controller is
+                    QuackHatController.Attached
+                    or QuackHatController.FlyingFollower
+                    or QuackHatController.GroundFollower
                 && component.Emitter == null
                 && _choices.IsComponentSelected(component.Id);
 
             if (eligible && component.ParentKind == QuackHatParentKind.Component)
             {
-                eligible = IsRenderableAttached(
+                eligible = IsRenderableComponent(
                     _definitions[component.ParentComponentId],
                     eligibility);
             }
@@ -281,25 +287,39 @@ namespace qUAckzak.Mod.QuackHat
 
             QuackHatComponentDefinition component = _definitions[componentId];
             Thing parent = _duck;
+            QuackHatVisualComponent parentVisual = null;
             if (component.ParentKind == QuackHatParentKind.Component)
             {
                 UpdateComponent(component.ParentComponentId, state, events, updated);
-                parent = _components[component.ParentComponentId].Thing;
+                parentVisual = _components[component.ParentComponentId];
+                parent = parentVisual.Thing;
             }
 
             QuackHatVisualComponent visual = _components[componentId];
-            visual.Animation.Update(state, events);
+            Vec2 target = GetTarget(component, parent);
+            UpdatePosition(component, visual, target);
+
+            visual.IsFollower = component.Controller is
+                    QuackHatController.FlyingFollower
+                    or QuackHatController.GroundFollower
+                || parentVisual?.IsFollower == true;
+            visual.FollowerMoving = component.Controller is
+                    QuackHatController.FlyingFollower
+                    or QuackHatController.GroundFollower
+                ? visual.MovedThisTick
+                : parentVisual?.FollowerMoving == true;
+
+            QuackHatDuckAnimationState componentState = state;
+            componentState.IsFollower = visual.IsFollower;
+            componentState.FollowerMoving = visual.FollowerMoving;
+            visual.Animation.Update(componentState, events);
             visual.Sprite.frame = visual.Animation.Frame;
 
             SpriteThing thing = visual.Thing;
-            Vec2 offset = new(component.OffsetX, component.OffsetY);
-            thing.position = component.ParentKind == QuackHatParentKind.Duck
-                ? _duck.anchorPosition + _duck.OffsetLocal(offset)
-                : parent.Offset(offset);
             thing.angle = parent.angle;
             thing.scale = parent.scale;
             thing.alpha = parent.alpha;
-            thing.offDir = ResolveFacing(component.Facing, parent);
+            thing.offDir = ResolveFacing(component.Facing, parent, visual);
             thing.flipHorizontal = thing.offDir < 0;
             thing.depth = ResolveDepth(component.RenderLayer, parent.depth);
             thing.visible = visual.Animation.Visible
@@ -307,11 +327,127 @@ namespace qUAckzak.Mod.QuackHat
                 && !_duck.removeFromLevel;
         }
 
-        private static sbyte ResolveFacing(QuackHatFacing facing, Thing parent)
+        private Vec2 GetTarget(QuackHatComponentDefinition component, Thing parent)
         {
-            // Movement-facing becomes meaningful for follower controllers. An
-            // attached component has no independent movement, so it inherits.
-            return facing == QuackHatFacing.Fixed ? (sbyte)1 : parent.offDir;
+            Vec2 offset = new(component.OffsetX, component.OffsetY);
+            return component.ParentKind == QuackHatParentKind.Duck
+                ? _duck.anchorPosition + _duck.OffsetLocal(offset)
+                : parent.Offset(offset);
+        }
+
+        private void UpdatePosition(
+            QuackHatComponentDefinition component,
+            QuackHatVisualComponent visual,
+            Vec2 target)
+        {
+            Vec2 previous = visual.Thing.position;
+            if (!visual.PositionInitialized)
+            {
+                visual.Thing.position = component.Controller == QuackHatController.GroundFollower
+                    && TryFindGround(target.x, target.y, out Vec2 ground)
+                    ? ground
+                    : target;
+                visual.PositionInitialized = true;
+                visual.MovedThisTick = false;
+                return;
+            }
+
+            switch (component.Controller)
+            {
+                case QuackHatController.Attached:
+                    visual.Thing.position = target;
+                    break;
+
+                case QuackHatController.FlyingFollower:
+                    visual.Thing.position = MoveTowards(
+                        previous,
+                        target,
+                        component.Speed);
+                    break;
+
+                case QuackHatController.GroundFollower:
+                    float nextX = MoveTowards(previous.x, target.x, component.Speed);
+                    if (TryFindGround(nextX, target.y, out Vec2 ground))
+                    {
+                        visual.Thing.position = ground;
+                    }
+                    break;
+            }
+
+            Vec2 movement = visual.Thing.position - previous;
+            visual.MovedThisTick = movement.length > MovementThreshold;
+            if (Math.Abs(movement.x) > MovementThreshold)
+            {
+                visual.MovementDirection = movement.x < 0f ? (sbyte)-1 : (sbyte)1;
+            }
+        }
+
+        private bool TryFindGround(
+            float x,
+            float desiredY,
+            out Vec2 ground)
+        {
+            Vec2 start = new(x, desiredY - GroundProbeAbove);
+            float endY = Math.Max(
+                start.y + 1f,
+                _level.bottomRight.y + GroundProbeBelowLevel);
+            Vec2 end = new(x, endY);
+            float closestDistance = float.MaxValue;
+            ground = Vec2.Zero;
+
+            foreach (IPlatform platform in _level.CollisionLineAll<IPlatform>(start, end))
+            {
+                if (platform is not Thing thing)
+                {
+                    continue;
+                }
+
+                Vec2 hit = Collision.LinePoint(start, end, thing);
+                float distance = hit.y - start.y;
+                if (distance < 0f || distance >= closestDistance)
+                {
+                    continue;
+                }
+
+                closestDistance = distance;
+                ground = hit;
+            }
+
+            return closestDistance < float.MaxValue;
+        }
+
+        private static Vec2 MoveTowards(Vec2 current, Vec2 target, float maximumDistance)
+        {
+            Vec2 difference = target - current;
+            float distance = difference.length;
+            return distance <= maximumDistance || distance <= 0f
+                ? target
+                : current + difference * (maximumDistance / distance);
+        }
+
+        private static float MoveTowards(float current, float target, float maximumDistance)
+        {
+            float difference = target - current;
+            if (Math.Abs(difference) <= maximumDistance)
+            {
+                return target;
+            }
+
+            return current + Math.Sign(difference) * maximumDistance;
+        }
+
+        private static sbyte ResolveFacing(
+            QuackHatFacing facing,
+            Thing parent,
+            QuackHatVisualComponent visual)
+        {
+            return facing switch
+            {
+                QuackHatFacing.Fixed => 1,
+                QuackHatFacing.Movement when visual.MovementDirection != 0 =>
+                    visual.MovementDirection,
+                _ => parent.offDir
+            };
         }
 
         private Depth ResolveDepth(QuackHatRenderLayer layer, Depth parentDepth)
@@ -343,6 +479,16 @@ namespace qUAckzak.Mod.QuackHat
             public SpriteThing Thing { get; }
 
             public QuackHatAnimationPlayer Animation { get; }
+
+            public bool PositionInitialized { get; set; }
+
+            public bool MovedThisTick { get; set; }
+
+            public sbyte MovementDirection { get; set; }
+
+            public bool IsFollower { get; set; }
+
+            public bool FollowerMoving { get; set; }
         }
     }
 }

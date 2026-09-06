@@ -10,6 +10,8 @@ namespace qUAckzak.Mod.QuackHat
         public bool Airborne { get; set; }
         public bool Running { get; set; }
         public bool Crouching { get; set; }
+        public bool IsFollower { get; set; }
+        public bool FollowerMoving { get; set; }
     }
 
     internal struct QuackHatAnimationEvents
@@ -108,7 +110,10 @@ namespace qUAckzak.Mod.QuackHat
         private QuackHatAnimationDefinition SelectStateAnimation(
             QuackHatDuckAnimationState state)
         {
-            if (state.Netted && TryGet(QuackHatTrigger.Netted, out QuackHatAnimationDefinition animation))
+            if (state.Netted
+                && TryGet(
+                    QuackHatTrigger.Netted,
+                    out QuackHatAnimationDefinition animation))
             {
                 return animation;
             }
@@ -134,6 +139,20 @@ namespace qUAckzak.Mod.QuackHat
             }
 
             if (state.Crouching && TryGet(QuackHatTrigger.Crouching, out animation))
+            {
+                return animation;
+            }
+
+            if (state.IsFollower
+                && state.FollowerMoving
+                && TryGet(QuackHatTrigger.FollowerMoving, out animation))
+            {
+                return animation;
+            }
+
+            if (state.IsFollower
+                && !state.FollowerMoving
+                && TryGet(QuackHatTrigger.FollowerIdle, out animation))
             {
                 return animation;
             }

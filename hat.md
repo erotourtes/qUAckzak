@@ -134,6 +134,9 @@ State priority is fixed for every hat:
 death > netted > ragdoll > sliding > airborne > running > crouching > idle > default
 ```
 
+For follower component trees, `follower_moving` or `follower_idle` is checked
+after the duck states and before `idle`/`default`.
+
 ### Emitters
 
 An optional emitter is nested after its component's animations:
@@ -516,7 +519,11 @@ protocol.
    variant for each duplicate trigger at level start. Choices are deterministic
    from the level seed and hat ID, shared by every duck wearing that hat in the
    level, and inherited by child components.
-6. Implement flying and ground follower controllers.
+6. **Done:** move flying followers toward their inherited target with the
+   configured per-tick speed cap, and move ground followers horizontally while
+   projecting them onto the nearest walkable platform below their target.
+   Movement-facing and `follower_moving`/`follower_idle` animations propagate
+   to attached child components.
 7. Implement attached events, world one-shots, and emitters.
 8. Test animated hair between two qUAckzak clients.
 9. Test with a receiving client without qUAckzak.

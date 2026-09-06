@@ -80,5 +80,6 @@ their XSD-validated `hat.xml` manifests.
   hat. Offline play currently renders selected `attached` components,
   including looping duck-state animations and one-shot death/direction-change
   animations. Per-level selection groups and duplicate animation variants are
-  also supported. Followers, effects, and online component rendering are the
-  next implementation slices.
+  also supported. Flying and ground followers use their configured speed,
+  movement-facing direction, and follower animation states. Effects and online
+  component rendering are the next implementation slices.
