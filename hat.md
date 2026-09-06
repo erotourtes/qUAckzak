@@ -540,7 +540,10 @@ effects must be tested before adding an event protocol.
 9. **Done:** let only the owning client run qUAckhat behavior online, transfer
    its frame teams with reliable native `NMSpecialHat` messages, and represent
    persistent components and one-shots as ordinary ghosted `TeamHat` tiles.
-10. Test animated hair between two qUAckzak clients.
-11. Test with a receiving client without qUAckzak.
-12. Test pet selection, glint, and death effects online before extending the
+10. **Done:** retain a dying duck's existing component graph after Duck Game
+    unequips its root hat, long enough to observe the death edge, start detached
+    death effects, and finish any attached death animation.
+11. Test animated hair between two qUAckzak clients.
+12. Test with a receiving client without qUAckzak.
+13. Test pet selection, glint, and death effects online before extending the
     network design.

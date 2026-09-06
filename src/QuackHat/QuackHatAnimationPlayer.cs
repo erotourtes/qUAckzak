@@ -41,6 +41,11 @@ namespace qUAckzak.Mod.QuackHat
 
         public bool Visible { get; private set; }
 
+        public bool IsPlayingEvent(QuackHatTrigger trigger)
+        {
+            return _playingEvent && _activeTrigger == trigger;
+        }
+
         public void Update(
             QuackHatDuckAnimationState state,
             QuackHatAnimationEvents events)

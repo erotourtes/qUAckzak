@@ -68,9 +68,28 @@ namespace qUAckzak.Mod.QuackHat
                 TeamHat teamHat = duck.GetEquipment(typeof(TeamHat)) as TeamHat;
                 QuackHatDefinition definition = _service.FindByTeam(teamHat?.team);
 
-                if (duck.removeFromLevel || definition == null)
+                if (duck.removeFromLevel)
                 {
                     RemoveVisual(duck);
+                    continue;
+                }
+
+                if (definition == null)
+                {
+                    if (_visuals.TryGetValue(duck, out QuackHatDuckVisual dyingVisual)
+                        && duck.dead)
+                    {
+                        dyingVisual.Update();
+                        if (!dyingVisual.IsPlayingDeathAnimation)
+                        {
+                            RemoveVisual(duck);
+                        }
+                    }
+                    else
+                    {
+                        RemoveVisual(duck);
+                    }
+
                     continue;
                 }
 
@@ -287,6 +306,9 @@ namespace qUAckzak.Mod.QuackHat
         }
 
         public QuackHatDefinition Definition { get; }
+
+        public bool IsPlayingDeathAnimation => _components.Values.Any(
+            component => component.Animation.IsPlayingEvent(QuackHatTrigger.Death));
 
         public void Update()
         {
