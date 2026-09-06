@@ -39,7 +39,7 @@ content/quackhat/<hat-id>/
     └── ...
 ```
 
-- `preview.png` is displayed by the hat selector.
+- `preview.png` is reserved for a later qUAckhat-aware selector preview.
 - `hat.png` is the ordinary selectable Duck Game hat and package root.
 - `hat.xml` describes every additional component.
 - File names have no behavioral meaning; behavior comes from the manifest.
@@ -504,7 +504,10 @@ protocol.
 1. **Done:** parse, discover, and validate every
    `content/quackhat/*/hat.xml` package.
 2. **Done:** load sprite sheets and validate image dimensions and frame bounds.
-3. Register root hats and render static attached components offline.
+3. **Done:** register `hat.png` roots in Duck Game's native hat selector and
+   render ungrouped, static `attached` component trees offline. Static children
+   inherit their component parent's transform; animation, group selection,
+   followers, emitters, and online component rendering remain in later slices.
 4. Implement animation clocks and duck-state triggers.
 5. Implement per-level group and duplicate-trigger choices.
 6. Implement flying and ground follower controllers.

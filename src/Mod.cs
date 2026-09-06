@@ -26,8 +26,14 @@ namespace qUAckzak.Mod
             quackHat.Reload();
             quackHat.LogStatus();
 
+            QuackHatRuntime quackHatRuntime = new(quackHat);
+
             MonoMain.instance.Components.Add(
-                new ModeHost(MonoMain.instance, turboQuack, konuami));
+                new ModeHost(
+                    MonoMain.instance,
+                    turboQuack,
+                    konuami,
+                    quackHatRuntime));
 
             QuackzakCommands.Register(turboQuack, quackHat);
 

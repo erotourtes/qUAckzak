@@ -76,3 +76,7 @@ their XSD-validated `hat.xml` manifests.
   validate every package without restarting Duck Game.
 - Package discovery also decodes every component PNG and checks its frame grid
   and animation ranges before accepting the hat.
+- Each package's `hat.png` is registered as an ordinary selectable Duck Game
+  hat. Offline play currently renders ungrouped, static `attached` components;
+  animated components, selection groups, followers, effects, and online
+  component rendering are the next implementation slices.

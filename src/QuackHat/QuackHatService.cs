@@ -12,6 +12,8 @@ namespace qUAckzak.Mod.QuackHat
         private IReadOnlyList<QuackHatDefinition> _hats = Array.Empty<QuackHatDefinition>();
         private IReadOnlyList<QuackHatLoadFailure> _failures = Array.Empty<QuackHatLoadFailure>();
 
+        public event Action Reloading;
+
         public QuackHatService(string catalogDirectory)
         {
             _catalogDirectory = catalogDirectory;
@@ -21,10 +23,22 @@ namespace qUAckzak.Mod.QuackHat
 
         public IReadOnlyList<QuackHatLoadFailure> Failures => _failures;
 
+        public QuackHatDefinition FindByTeam(Team team)
+        {
+            return team == null
+                ? null
+                : _hats.FirstOrDefault(hat => ReferenceEquals(hat.RootTeam, team));
+        }
+
         public void Reload()
         {
+            Reloading?.Invoke();
+
             List<QuackHatDefinition> hats = new();
             List<QuackHatLoadFailure> failures = new();
+            Dictionary<string, QuackHatDefinition> oldHatsById = _hats.ToDictionary(
+                hat => hat.Id,
+                StringComparer.Ordinal);
 
             if (Directory.Exists(_catalogDirectory))
             {
@@ -48,10 +62,23 @@ namespace qUAckzak.Mod.QuackHat
 
                 foreach (string packageDirectory in packageDirectories)
                 {
+                    string packageId = Path.GetFileName(packageDirectory.TrimEnd(
+                        Path.DirectorySeparatorChar,
+                        Path.AltDirectorySeparatorChar));
                     try
                     {
                         QuackHatDefinition hat = QuackHatManifestLoader.Load(packageDirectory);
                         QuackHatAssetLoader.Load(hat);
+                        try
+                        {
+                            QuackHatRootHatRegistry.Register(hat);
+                        }
+                        catch
+                        {
+                            QuackHatAssetLoader.Unload(hat);
+                            throw;
+                        }
+
                         hats.Add(hat);
                     }
                     catch (Exception exception)
@@ -61,12 +88,26 @@ namespace qUAckzak.Mod.QuackHat
                             PackagePath = packageDirectory,
                             Message = exception.Message
                         });
+
+                        if (oldHatsById.TryGetValue(packageId, out QuackHatDefinition oldHat))
+                        {
+                            hats.Add(oldHat);
+                        }
                     }
                 }
             }
 
             foreach (QuackHatDefinition oldHat in _hats)
             {
+                QuackHatDefinition replacement = hats.FirstOrDefault(
+                    hat => !ReferenceEquals(hat, oldHat)
+                        && string.Equals(hat.Id, oldHat.Id, StringComparison.Ordinal));
+                if (hats.Contains(oldHat))
+                {
+                    continue;
+                }
+
+                QuackHatRootHatRegistry.Replace(oldHat, replacement);
                 QuackHatAssetLoader.Unload(oldHat);
             }
 

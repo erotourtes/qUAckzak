@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DuckGame;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace qUAckzak.Mod.QuackHat
@@ -61,6 +62,7 @@ namespace qUAckzak.Mod.QuackHat
         public string DirectoryPath { get; set; }
         public string PreviewPath { get; set; }
         public string HatPath { get; set; }
+        public Team RootTeam { get; set; }
         public IReadOnlyList<QuackHatComponentDefinition> Components { get; set; }
     }
 
