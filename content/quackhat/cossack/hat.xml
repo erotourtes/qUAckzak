@@ -108,4 +108,48 @@
                lastFrame="0"
                ticksPerFrame="1" />
   </component>
+
+  <component id="pipe"
+             sprite="components/decorations/pipe.png"
+             offsetX="6"
+             offsetY="-2" />
+
+  <component id="vyshyvanka"
+             sprite="components/decorations/vyshyvanka.png"
+             frameWidth="48"
+             frameHeight="48"
+             offsetY="5">
+    <animation trigger="default"
+               firstFrame="0"
+               lastFrame="0"
+               ticksPerFrame="1" />
+    <animation trigger="running"
+               firstFrame="1"
+               lastFrame="3"
+               ticksPerFrame="3" />
+  </component>
+
+  <component id="bandura"
+             sprite="components/decorations/bandura.png"
+             offsetX="-5"
+             offsetY="3"
+             layer="behind" />
+
+  <component id="banner"
+             sprite="components/decorations/banner.png"
+             frameWidth="48"
+             frameHeight="64"
+             offsetX="-12"
+             offsetY="-12"
+             layer="behind">
+    <animation trigger="default"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="4" />
+  </component>
+
+  <component id="saber"
+             sprite="components/decorations/saber.png"
+             offsetX="8"
+             offsetY="4" />
 </hat>

@@ -559,8 +559,11 @@ effects must be tested before adding an event protocol.
     separately animated wings parented to the windmill. Ground followers align
     their sprite bottom with the platform instead of sinking their center into
     it.
-14. Test animated hair between two qUAckzak clients.
-15. Test with a receiving client without qUAckzak.
-16. Add the remaining decoration and effect art described above.
-17. Test pet selection, glint, and death effects online before extending the
+14. **Done:** add the pipe, running-state vyshyvanka, bandura, animated banner,
+    and saber as ordinary attached components with independent offsets, frame
+    sizes, animations, and render layers.
+15. Test animated hair between two qUAckzak clients.
+16. Test with a receiving client without qUAckzak.
+17. Add the remaining effect art described above.
+18. Test pet selection, glint, and death effects online before extending the
     network design.
