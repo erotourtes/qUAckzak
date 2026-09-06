@@ -71,6 +71,10 @@ All qUAckzak console commands use the lowercase `quackzak_` prefix.
 qUAckhat packages live under `content/quackhat/<hat-id>/` and are configured by
 their XSD-validated `hat.xml` manifests.
 
+The bundled **qUAckzak Cossack** package is the format's acceptance hat. Its
+first art slice includes an animated moustache and independently animated hair
+with a separate airborne state.
+
 - Run `quackzak_quackhat_status` to list loaded packages and manifest errors.
 - Run `quackzak_quackhat_reload` after editing a manifest to reload and
   validate every package without restarting Duck Game. Reloading is disabled

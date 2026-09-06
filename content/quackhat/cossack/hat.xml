@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<hat xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="../../../schemas/quackhat.xsd"
+     name="qUAckzak Cossack">
+  <component id="moustache"
+             sprite="components/moustache.png"
+             frameWidth="48"
+             frameHeight="24"
+             offsetX="3"
+             offsetY="-2"
+             layer="foreground">
+    <animation trigger="default"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="5" />
+  </component>
+  <component id="hair"
+             sprite="components/hair.png"
+             frameWidth="32"
+             frameHeight="48"
+             offsetX="4"
+             offsetY="-10"
+             layer="behind">
+    <animation trigger="default"
+               firstFrame="0"
+               lastFrame="3"
+               ticksPerFrame="5" />
+    <animation trigger="airborne"
+               firstFrame="4"
+               lastFrame="7"
+               ticksPerFrame="3" />
+  </component>
+</hat>

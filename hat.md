@@ -13,6 +13,10 @@ followers, repeated effects, attached event effects, and randomly selected
 death animations. The eventual rendering should use native Duck Game hat
 objects so other players can see it online.
 
+The package is implemented at `content/quackhat/cossack/`. Its artwork is
+deliberately split into reviewable slices alongside the runtime features it
+exercises.
+
 The manifest is XML. Its structure and primitive values are validated by
 [`schemas/quackhat.xsd`](schemas/quackhat.xsd), then deserialized into typed C#
 objects with `XmlSerializer`. C# performs rules that XSD 1.0 cannot express
@@ -546,7 +550,12 @@ effects must be tested before adding an event protocol.
 11. **Done:** keep hidden native event components inactive and defer their
     sprite-refresh pulse until the event becomes visible, preventing an idle
     glint or death frame from flashing on unmodded receivers.
-12. Test animated hair between two qUAckzak clients.
-13. Test with a receiving client without qUAckzak.
-14. Test pet selection, glint, and death effects online before extending the
+12. **Done:** add the first bundled Cossack acceptance-art slice: a native root
+    hat, independently animated moustache, and hair with separate default and
+    airborne animations. Their 48×24 and 32×48 frames also exercise online
+    horizontal and vertical tiling.
+13. Test animated hair between two qUAckzak clients.
+14. Test with a receiving client without qUAckzak.
+15. Add the remaining pet, decoration, and effect art described above.
+16. Test pet selection, glint, and death effects online before extending the
     network design.
