@@ -156,11 +156,10 @@ plays its animation once, and disappears. An emitter does not also specify
 `controller="world_one_shot"`, because that would describe the same behavior
 twice.
 
-## First hat component plan
+## Bundled Cossack package
 
-The examples use representative numeric values only; final frame dimensions,
-offsets, ranges, and speeds depend on the finished art. Unless stated
-otherwise, decorations are simultaneous and only pet roots use `group="pets"`.
+These examples match the checked-in Cossack art and manifest. Decorations are
+simultaneous, and only pet roots use `group="pets"`.
 
 ### Root hat
 
@@ -174,7 +173,8 @@ animation clock.
 
 ```xml
 <component id="moustache" sprite="components/moustache.png"
-           frameWidth="32" frameHeight="32" offsetX="2" offsetY="-3">
+           frameWidth="48" frameHeight="24" offsetX="3" offsetY="-2"
+           layer="foreground">
   <animation trigger="default" firstFrame="0" lastFrame="3"
              ticksPerFrame="5" />
 </component>
@@ -188,7 +188,8 @@ Hair uses a default ground animation and a separate airborne animation.
 
 ```xml
 <component id="hair" sprite="components/hair.png"
-           frameWidth="32" frameHeight="32" offsetY="-8">
+           frameWidth="32" frameHeight="48" offsetX="4" offsetY="-10"
+           layer="behind">
   <animation trigger="default" firstFrame="0" lastFrame="3"
              ticksPerFrame="5" />
   <animation trigger="airborne" firstFrame="4" lastFrame="7"
@@ -208,14 +209,11 @@ child, so they inherit both selection and movement.
 
 ```xml
 <component id="windmill" sprite="components/pets/windmill.png"
-           frameWidth="32" frameHeight="32" offsetX="-24" offsetY="-12"
+           offsetX="-28" offsetY="-12"
            facing="movement" controller="flying_follower" speed="2"
-           group="pets">
-  <animation trigger="default" firstFrame="0" lastFrame="3"
-             ticksPerFrame="4" />
-</component>
+           group="pets" />
 <component id="windmill-wings" sprite="components/pets/windmill-wings.png"
-           frameWidth="32" frameHeight="32" parent="windmill"
+           frameWidth="48" frameHeight="48" parent="windmill"
            layer="inherit">
   <animation trigger="default" firstFrame="0" lastFrame="3"
              ticksPerFrame="3" />
@@ -228,13 +226,13 @@ The sharovary follow along the ground and dance hopak near their target.
 
 ```xml
 <component id="sharovary" sprite="components/pets/sharovary.png"
-           frameWidth="32" frameHeight="32" offsetX="-24" offsetY="8"
+           frameWidth="48" frameHeight="48" offsetX="-28" offsetY="8"
            facing="movement" controller="ground_follower" speed="2"
            group="pets">
-  <animation trigger="follower_moving" firstFrame="0" lastFrame="3"
+  <animation trigger="follower_moving" firstFrame="0" lastFrame="1"
              ticksPerFrame="4" />
-  <animation trigger="follower_idle" firstFrame="4" lastFrame="9"
-             ticksPerFrame="4" />
+  <animation trigger="follower_idle" firstFrame="2" lastFrame="3"
+             ticksPerFrame="5" />
 </component>
 ```
 
@@ -245,7 +243,7 @@ there is a concrete interaction requirement.
 
 ```xml
 <component id="cannon" sprite="components/pets/cannon.png"
-           offsetX="-24" offsetY="8" facing="movement"
+           offsetX="-30" offsetY="8" facing="movement"
            controller="ground_follower" speed="1.5" group="pets" />
 ```
 
@@ -256,7 +254,7 @@ not needed by the current requirement.
 
 ```xml
 <component id="chaika" sprite="components/pets/chaika.png"
-           offsetX="-28" offsetY="5" facing="movement"
+           offsetX="-32" offsetY="6" facing="movement"
            controller="flying_follower" speed="1.5" group="pets" />
 ```
 
@@ -267,10 +265,10 @@ physics.
 
 ```xml
 <component id="barrel" sprite="components/pets/barrel.png"
-           frameWidth="32" frameHeight="32" offsetX="-24" offsetY="8"
+           frameWidth="48" frameHeight="48" offsetX="-28" offsetY="8"
            facing="fixed" controller="ground_follower" speed="2"
            group="pets">
-  <animation trigger="follower_moving" firstFrame="0" lastFrame="5"
+  <animation trigger="follower_moving" firstFrame="0" lastFrame="3"
              ticksPerFrame="3" />
   <animation trigger="follower_idle" firstFrame="0" lastFrame="0"
              ticksPerFrame="1" />
@@ -285,7 +283,7 @@ The pipe is duck-attached and is the parent of the smoke emitter.
 
 ```xml
 <component id="pipe" sprite="components/decorations/pipe.png"
-           offsetX="5" offsetY="-2" />
+           offsetX="6" offsetY="-2" />
 ```
 
 ### Vyshyvanka
@@ -295,10 +293,10 @@ standard state animations needed by the art.
 
 ```xml
 <component id="vyshyvanka" sprite="components/decorations/vyshyvanka.png"
-           frameWidth="32" frameHeight="32" offsetY="5">
+           frameWidth="48" frameHeight="48" offsetY="5">
   <animation trigger="default" firstFrame="0" lastFrame="0"
              ticksPerFrame="1" />
-  <animation trigger="running" firstFrame="1" lastFrame="4"
+  <animation trigger="running" firstFrame="1" lastFrame="3"
              ticksPerFrame="3" />
 </component>
 ```
@@ -307,7 +305,7 @@ standard state animations needed by the art.
 
 ```xml
 <component id="bandura" sprite="components/decorations/bandura.png"
-           offsetX="-4" offsetY="3" layer="behind" />
+           offsetX="-5" offsetY="3" layer="behind" />
 ```
 
 ### Khoruhva/banner
@@ -316,7 +314,7 @@ The banner is behind the duck with its own looping cloth animation.
 
 ```xml
 <component id="banner" sprite="components/decorations/banner.png"
-           frameWidth="32" frameHeight="32" offsetX="-7" offsetY="-4"
+           frameWidth="48" frameHeight="64" offsetX="-12" offsetY="-12"
            layer="behind">
   <animation trigger="default" firstFrame="0" lastFrame="3"
              ticksPerFrame="4" />
@@ -329,7 +327,7 @@ The saber is offset over the duck's torso/hip and is the parent of its glint.
 
 ```xml
 <component id="saber" sprite="components/decorations/saber.png"
-           offsetX="7" offsetY="5" />
+           offsetX="8" offsetY="4" />
 ```
 
 ## Effects
@@ -562,8 +560,8 @@ effects must be tested before adding an event protocol.
 14. **Done:** add the pipe, running-state vyshyvanka, bandura, animated banner,
     and saber as ordinary attached components with independent offsets, frame
     sizes, animations, and render layers.
-15. Test animated hair between two qUAckzak clients.
-16. Test with a receiving client without qUAckzak.
+15. **Pending in-game check:** test animated hair between two qUAckzak clients.
+16. **Pending in-game check:** test with a receiving client without qUAckzak.
 17. **Done:** add running sunflower and pipe-smoke emitters, a rising spirit,
     an attached saber glint, and three per-level death-animation variants.
     Every effect is a four-frame sheet with movement, scale, and fading baked
@@ -572,8 +570,8 @@ effects must be tested before adding an event protocol.
     Game can unequip the hat and teleport or hide the duck as part of a kill;
     attached death frames, spirits, and detached death variants now start at
     the visible pre-death position instead of following that disappearance.
-19. Test pet selection, glint, and death effects online before extending the
-    network design.
+19. **Pending in-game check:** test pet selection, glint, and death effects
+    online.
 20. **Done:** include runtime state in `quackzak_quackhat_status`, including
     online/offline ownership mode, active wearers, selected group members,
     selected duplicate-trigger variants, and the live one-shot count needed to

@@ -72,8 +72,10 @@ qUAckhat packages live under `content/quackhat/<hat-id>/` and are configured by
 their XSD-validated `hat.xml` manifests.
 
 The bundled **qUAckzak Cossack** package is the format's acceptance hat. Its
-first art slice includes an animated moustache and independently animated hair
-with a separate airborne state.
+components cover independently animated moustache and hair, airborne and
+running state changes, one randomly selected pet per level, attached
+decorations, time- and distance-based emitters, an attached direction-change
+glint, and randomly selected death effects.
 
 - Run `quackzak_quackhat_status` to list loaded packages and manifest errors,
   then report the runtime mode, active wearers, selected component-group member
@@ -85,12 +87,21 @@ with a separate airborne state.
 - Package discovery also decodes every component PNG and checks its frame grid
   and animation ranges before accepting the hat.
 - Each package's `hat.png` is registered as an ordinary selectable Duck Game
-  hat. Offline play currently renders selected `attached` components,
-  including looping duck-state animations and one-shot death/direction-change
-  animations. Per-level selection groups and duplicate animation variants are
-  also supported. Flying and ground followers use their configured speed,
-  movement-facing direction, and follower animation states. Attached events,
-  detached death/direction effects, and time/distance emitters work offline and
+  hat. Components support looping duck-state animations, per-level groups and
+  animation variants, flying and ground followers, attached events, detached
+  death/direction effects, and time/distance emitters. They run offline and
   online. Online pieces are transferred as native custom-hat images and
   synchronized as ordinary `TeamHat` objects, so a receiving player does not
   need qUAckzak to render them.
+
+### In-game verification
+
+1. Select **qUAckzak Cossack** and run `quackzak_quackhat_status`; it should
+   show one active wearer, `pets=<component>`, and
+   `death-animation.death=<variant>/3`.
+2. Run to emit sunflowers, wait for pipe smoke, jump to switch the hair
+   animation, and reverse direction to trigger the saber glint.
+3. Die once to check the spirit and the selected death variant. Start another
+   level to exercise a new deterministic pet/variant selection.
+4. Repeat online with one qUAckzak receiver and one receiver without the mod.
+   The latter should still see the native synchronized component tiles.
