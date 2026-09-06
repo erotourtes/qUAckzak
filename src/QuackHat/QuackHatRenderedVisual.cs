@@ -138,7 +138,11 @@ namespace qUAckzak.Mod.QuackHat
                 tile.solid = false;
                 tile.enablePhysics = false;
                 tile.visible = visible;
-                if (tile.active)
+                if (!visible)
+                {
+                    tile.active = false;
+                }
+                else if (tile.active)
                 {
                     tile.active = false;
                 }

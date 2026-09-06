@@ -543,7 +543,10 @@ effects must be tested before adding an event protocol.
 10. **Done:** retain a dying duck's existing component graph after Duck Game
     unequips its root hat, long enough to observe the death edge, start detached
     death effects, and finish any attached death animation.
-11. Test animated hair between two qUAckzak clients.
-12. Test with a receiving client without qUAckzak.
-13. Test pet selection, glint, and death effects online before extending the
+11. **Done:** keep hidden native event components inactive and defer their
+    sprite-refresh pulse until the event becomes visible, preventing an idle
+    glint or death frame from flashing on unmodded receivers.
+12. Test animated hair between two qUAckzak clients.
+13. Test with a receiving client without qUAckzak.
+14. Test pet selection, glint, and death effects online before extending the
     network design.
