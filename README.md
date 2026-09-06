@@ -50,9 +50,10 @@ For more info see [qUAckzak.Mod.csproj](./qUAckzak.Mod.csproj)
   direction to stop. Fancy Shoes are intentionally excluded.
 - Hold Jump while trapped in a net or a Camping Gun sleeping bag to repeat the
   struggle until released or the duck escapes. Net presses are limited to one
-  every eight simulation ticks (7.5 per second), close to a plausible human
-  mash rate. Sleeping-bag presses use Duck Game's slower built-in ragdoll
-  cooldown. Left and Right can still be held to steer a grounded net.
+  every seven and eight simulation ticks in alternation (8 per second), close
+  to a plausible human mash rate. Sleeping-bag presses use Duck Game's slower
+  built-in ragdoll cooldown. Left and Right can still be held to steer a
+  grounded net.
 - Other local and remote ducks are not affected. The enabled state persists
   between rounds.
 - Run `quackzak_turboquack_status` in the developer console to report whether

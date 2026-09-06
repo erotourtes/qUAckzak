@@ -8,13 +8,17 @@ namespace qUAckzak.Mod.Modes
         public const string ToggleTrigger = "TURBOQUACK";
 
         private const float RagdollNudgeTimerPerFrame = 0.07f;
-        private const int NetJumpRepeatIntervalTicks = 8;
+        // Alternating 7- and 8-tick gaps averages 7.5 ticks: 8 presses per
+        // second at Duck Game's 60-tick simulation rate, without randomness.
+        private const int ShortNetJumpRepeatIntervalTicks = 7;
+        private const int LongNetJumpRepeatIntervalTicks = 8;
 
         private readonly List<InjectedInput> _injectedInputs = new();
 
         private bool _enabled;
         private bool _netJumpWasHeld;
         private int _netJumpHeldTicks;
+        private int _netJumpRepeatIntervalTicks = ShortNetJumpRepeatIntervalTicks;
 
         public string Name => "turboqUAck";
 
@@ -172,12 +176,16 @@ namespace qUAckzak.Mod.Modes
             }
 
             _netJumpHeldTicks++;
-            if (_netJumpHeldTicks < NetJumpRepeatIntervalTicks)
+            if (_netJumpHeldTicks < _netJumpRepeatIntervalTicks)
             {
                 return;
             }
 
             _netJumpHeldTicks = 0;
+            _netJumpRepeatIntervalTicks =
+                _netJumpRepeatIntervalTicks == ShortNetJumpRepeatIntervalTicks
+                    ? LongNetJumpRepeatIntervalTicks
+                    : ShortNetJumpRepeatIntervalTicks;
             Inject(inputProfile, Triggers.Jump);
         }
 
@@ -185,6 +193,7 @@ namespace qUAckzak.Mod.Modes
         {
             _netJumpWasHeld = false;
             _netJumpHeldTicks = 0;
+            _netJumpRepeatIntervalTicks = ShortNetJumpRepeatIntervalTicks;
         }
 
         private static string GetHeldDirection(InputProfile inputProfile)
