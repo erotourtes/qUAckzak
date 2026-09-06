@@ -8,7 +8,10 @@ namespace qUAckzak.Mod.Commands
     {
         private const string Prefix = "quackzak_";
 
-        public static void Register(TurboQuackMode turboQuack, QuackHatService quackHat)
+        public static void Register(
+            TurboQuackMode turboQuack,
+            QuackHatService quackHat,
+            QuackHatRuntime quackHatRuntime)
         {
             CMD statusCommand = new(
                 Prefix + "turboquack_status",
@@ -21,7 +24,7 @@ namespace qUAckzak.Mod.Commands
 
             CMD quackHatStatusCommand = new(
                 Prefix + "quackhat_status",
-                quackHat.LogStatus)
+                () => LogQuackHatStatus(quackHat, quackHatRuntime))
             {
                 description = "Reports loaded qUAckhat packages and manifest errors."
             };
@@ -47,6 +50,14 @@ namespace qUAckzak.Mod.Commands
         {
             quackHat.Reload();
             quackHat.LogStatus();
+        }
+
+        private static void LogQuackHatStatus(
+            QuackHatService quackHat,
+            QuackHatRuntime quackHatRuntime)
+        {
+            quackHat.LogStatus();
+            quackHatRuntime.LogStatus();
         }
     }
 }

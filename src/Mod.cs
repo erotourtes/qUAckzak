@@ -35,7 +35,7 @@ namespace qUAckzak.Mod
                     konuami,
                     quackHatRuntime));
 
-            QuackzakCommands.Register(turboQuack, quackHat);
+            QuackzakCommands.Register(turboQuack, quackHat, quackHatRuntime);
 
             DevConsole.Log("qUAckzak loaded mode: turboqUAck");
             DevConsole.Log("qUAckzak loaded mode: konUAmi");

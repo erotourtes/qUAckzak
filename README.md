@@ -75,7 +75,9 @@ The bundled **qUAckzak Cossack** package is the format's acceptance hat. Its
 first art slice includes an animated moustache and independently animated hair
 with a separate airborne state.
 
-- Run `quackzak_quackhat_status` to list loaded packages and manifest errors.
+- Run `quackzak_quackhat_status` to list loaded packages and manifest errors,
+  then report the runtime mode, active wearers, selected component-group member
+  (such as the pet), selected animation variant, and live one-shot count.
 - Run `quackzak_quackhat_reload` after editing a manifest to reload and
   validate every package without restarting Duck Game. Reloading is disabled
   during an online session because Duck Game's native custom-hat indices must

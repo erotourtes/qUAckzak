@@ -574,3 +574,7 @@ effects must be tested before adding an event protocol.
     the visible pre-death position instead of following that disappearance.
 19. Test pet selection, glint, and death effects online before extending the
     network design.
+20. **Done:** include runtime state in `quackzak_quackhat_status`, including
+    online/offline ownership mode, active wearers, selected group members,
+    selected duplicate-trigger variants, and the live one-shot count needed to
+    diagnose the remaining in-game checks.

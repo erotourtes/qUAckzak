@@ -142,6 +142,31 @@ namespace qUAckzak.Mod.QuackHat
             _currentLevel = null;
         }
 
+        public void LogStatus()
+        {
+            string mode = Network.isActive ? "online owner-only" : "offline";
+            DevConsole.Log(
+                $"qUAckhat runtime is {mode}: {_visuals.Count} active wearer(s), "
+                + $"{_oneShots.Count} live one-shot effect(s).");
+
+            if (_visuals.Count == 0)
+            {
+                DevConsole.Log(
+                    "|YELLOW|qUAckhat has no active wearer; equip a loaded qUAckhat root to test it.");
+                return;
+            }
+
+            foreach (KeyValuePair<Duck, QuackHatDuckVisual> pair in _visuals)
+            {
+                Duck duck = pair.Key;
+                QuackHatDuckVisual visual = pair.Value;
+                string wearer = duck.profile?.name ?? "environment duck";
+                DevConsole.Log(
+                    $"|LIME|qUAckhat wearer '{wearer}': '{visual.Definition.Name}'; "
+                    + visual.DescribeRandomChoices());
+            }
+        }
+
         private void ResetVisuals()
         {
             foreach (QuackHatDuckVisual visual in _visuals.Values)
@@ -312,6 +337,47 @@ namespace qUAckzak.Mod.QuackHat
 
         public bool IsPlayingDeathAnimation => _components.Values.Any(
             component => component.Animation.IsPlayingEvent(QuackHatTrigger.Death));
+
+        public string DescribeRandomChoices()
+        {
+            List<string> descriptions = new();
+            foreach (IGrouping<string, QuackHatComponentDefinition> group in
+                Definition.Components
+                    .Where(component => component.Group != null)
+                    .GroupBy(component => component.Group, StringComparer.Ordinal))
+            {
+                QuackHatComponentDefinition selected = group.First(
+                    component => _choices.IsComponentSelected(component.Id));
+                descriptions.Add($"{group.Key}={selected.Id}");
+            }
+
+            foreach (QuackHatComponentDefinition component in Definition.Components)
+            {
+                foreach (IGrouping<QuackHatTrigger, QuackHatAnimationDefinition> variants in
+                    component.Animations
+                        .GroupBy(animation => animation.Trigger)
+                        .Where(group => group.Count() > 1))
+                {
+                    QuackHatAnimationDefinition[] choices = variants.ToArray();
+                    if (!_choices.TryGetAnimation(
+                        component.Id,
+                        variants.Key,
+                        out QuackHatAnimationDefinition selected))
+                    {
+                        continue;
+                    }
+
+                    int selectedIndex = Array.IndexOf(choices, selected) + 1;
+                    descriptions.Add(
+                        $"{component.Id}.{variants.Key.ToString().ToLowerInvariant()}="
+                        + $"{selectedIndex}/{choices.Length}");
+                }
+            }
+
+            return descriptions.Count == 0
+                ? "no randomized choices"
+                : string.Join(", ", descriptions);
+        }
 
         public void Update()
         {
