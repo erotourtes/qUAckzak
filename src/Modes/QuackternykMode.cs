@@ -130,7 +130,11 @@ namespace qUAckzak.Mod.Modes
             shouldbeinupdateloop = false;
             shouldhavevessel = false;
             shouldbegraphicculled = false;
-            depth = (Depth)0.95f;
+            // Blocks are drawn on Layer.Blocks after Layer.Game. Foreground is
+            // drawn after both, so the hint remains visible through block and
+            // foreground geometry without leaving world/camera coordinates.
+            layer = Layer.Foreground;
+            depth = (Depth)(-1f);
         }
 
         public void Follow(Duck duck)

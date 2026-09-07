@@ -75,7 +75,7 @@ All qUAckzak console commands use the lowercase `quackzak_` prefix.
   controller. Press it once to enable qUAckternyk and again to disable it.
 - While enabled during a match, a small pulsing lime chevron points at every
   living duck. It follows the visible duck position while standing, ragdolled,
-  or trapped in a net.
+  or trapped in a net, and is drawn above blocks and foreground geometry.
 - The markers are local-only, nonphysical hints. They are never synchronized to
   other players and do not modify any duck or gameplay state.
 - Run `quackzak_quackternyk_status` in the developer console to report whether
