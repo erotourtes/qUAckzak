@@ -10,6 +10,7 @@ namespace qUAckzak.Mod.Commands
 
         public static void Register(
             TurboQuackMode turboQuack,
+            QuackternykMode quackternyk,
             QuackHatService quackHat,
             QuackHatRuntime quackHatRuntime)
         {
@@ -21,6 +22,15 @@ namespace qUAckzak.Mod.Commands
             };
 
             DevConsole.AddCommand(statusCommand);
+
+            CMD quackternykStatusCommand = new(
+                Prefix + "quackternyk_status",
+                () => LogQuackternykStatus(quackternyk))
+            {
+                description = "Reports whether qUAckternyk is enabled or disabled."
+            };
+
+            DevConsole.AddCommand(quackternykStatusCommand);
 
             CMD quackHatStatusCommand = new(
                 Prefix + "quackhat_status",
@@ -44,6 +54,14 @@ namespace qUAckzak.Mod.Commands
         {
             string status = turboQuack.Enabled ? "|LIME|enabled" : "|RED|disabled";
             DevConsole.Log($"turboqUAck is {status}");
+        }
+
+        private static void LogQuackternykStatus(QuackternykMode quackternyk)
+        {
+            string status = quackternyk.Enabled ? "|LIME|enabled" : "|RED|disabled";
+            DevConsole.Log(
+                $"qUAckternyk is {status}; "
+                + $"highlighting {quackternyk.HighlightedDuckCount} living duck(s)");
         }
 
         private static void ReloadQuackHats(QuackHatService quackHat)

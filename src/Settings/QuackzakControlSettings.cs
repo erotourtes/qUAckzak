@@ -52,6 +52,12 @@ namespace qUAckzak.Mod.Settings
                 "|LIME|KONUAMI",
                 KonuamiMode.Trigger,
                 TurboQuackMode.ToggleTrigger);
+            AddControl(
+                controlBox,
+                controlElements,
+                "|LIME|QUACKTERNYK",
+                QuackternykMode.ToggleTrigger,
+                KonuamiMode.Trigger);
         }
 
         private static void AddControl(

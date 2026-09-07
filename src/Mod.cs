@@ -21,6 +21,7 @@ namespace qUAckzak.Mod
 
             TurboQuackMode turboQuack = new();
             KonuamiMode konuami = new();
+            QuackternykMode quackternyk = new();
             QuackHatService quackHat = new(GetPath("quackhat"));
 
             quackHat.Reload();
@@ -33,12 +34,18 @@ namespace qUAckzak.Mod
                     MonoMain.instance,
                     turboQuack,
                     konuami,
+                    quackternyk,
                     quackHatRuntime));
 
-            QuackzakCommands.Register(turboQuack, quackHat, quackHatRuntime);
+            QuackzakCommands.Register(
+                turboQuack,
+                quackternyk,
+                quackHat,
+                quackHatRuntime);
 
             DevConsole.Log("qUAckzak loaded mode: turboqUAck");
             DevConsole.Log("qUAckzak loaded mode: konUAmi");
+            DevConsole.Log("qUAckzak loaded mode: qUAckternyk");
             DevConsole.Log("qUAckzak loaded runtime: qUAckhat");
         }
     }
